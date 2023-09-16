@@ -1,0 +1,31 @@
+connect 
+getlastline V> %%CURRENT_PROMPT%%
+L cd %%DBL%%
+R show ver > version.txt
+R show int > ints.txt
+L cat ints.txt V> %%COUNTER%%
+loop while %%COUNTER%% > 0 {
+	L head -1 ints.txt; sed -i '1d' ints.txt V> %%INT%%
+	R show int %%INT%% > int.txt
+	L cat int.txt | grep "Vlan" V> %%VLAN_EXISTS%%
+	L if(%%VLAN_EXISTS%% isNotEmpty) echo "%%INT%%" > results
+	L echo $((%%COUNTER%% - 1)) V> %%COUNTER%%
+}
+L cat results V> %%RESULTS%%
+L if(%%RESULTS%% notEmpty and %%RESULTS%% notContain "No such") result1
+L if(%%RESULTS%% empty or %%RESULTS%% contain "No such") result2
+
+result1 {
+	command: echo "No interfaces found with Vlan configured"
+	status: success
+	text: "No interfaces found with Vlan configured"
+	saveTo: logs/results.log
+}
+
+result2 {
+	command: echo "Interfaces with Vlan configured found: %%RESULTS%%"
+	status: fail
+	text: "Interfaces with Vlan configured found: %%RESULTS%%"
+	saveTo: logs/results.log
+}
+
