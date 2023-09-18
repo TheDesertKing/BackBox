@@ -24,8 +24,16 @@ def get_command_props(c):
     return props
 
 
+def type_notation(ctype):
+    CTYPES = {'internal':'I',
+              'remote':'R',
+              'local':'L'}
+    return CTYPES[ctype]
+
+
 def construct_line(props):
-    if props["ctype"] == internal
+    line = type_notation(props['ctype'])
+    
 
 
 def main():
