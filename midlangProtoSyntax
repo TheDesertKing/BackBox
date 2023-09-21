@@ -1,8 +1,27 @@
+Structure:
+
+# DESC
+T COND CMD ST SL STAT TOUT SLP HIDE
+& WAITFOR
+* STAT
+
+DESC = description (send to Backbox via TFTP)
+T = command type (I,R,L)
+COND = condition (if(%%A%% == %%B%%))
+CMD = command (echo "123")
+ST = save type and file permissions (>,>>,V>,600>)
+SL = save location (%%VAR%%,abc.txt)
+TOUT = timeout (t30,t10800) [seconds]
+SLP = sleep (s15,s200) [seconds]
+HIDE = hide output (hide)
+WAITFOR = wait for conditions ($:S,Error:F,Suspecious:SUSPCT)
+STAT = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
+
 connect 
-getlastline V> %%CURRENT_PROMPT%%
+I getlastline V> %%CURRENT_PROMPT%%
 L cd %%DBL%%
-R show ver > version.txt
-R show int > ints.txt
+R show ver > version.txt t300
+R show int > ints.txt s123
 L cat ints.txt V> %%COUNTER%%
 loop while %%COUNTER%% > 0 {
 	L head -1 ints.txt; sed -i '1d' ints.txt V> %%INT%%
