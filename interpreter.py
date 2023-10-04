@@ -7,6 +7,7 @@ DEFAULT_WAITFOR = {
     "remote": '[{"waitfor":"#","status":"success","message":""}, {"waitfor":"%%CURRENT_PROMPT%%","status":"success","message":""}]',
     "local": '[{"waitfor":"BBP","status":"success","message":""}]',
 }
+STATUS = {"success": "S", "failure": "F", "suspect": "SUS"}
 
 
 def parse_commands_file(filename):
@@ -103,12 +104,27 @@ def waitfor_notation(p, waitfor, ctype):
         return
     else:
         waitfor_data = json.loads(waitfor)
-        notated_waitfor = ""
+        options = []
         for option_data in waitfor_data:
-            print(option_data)
-            option = []
-            option.append(1)
-        p.append("\n& " + waitfor)
+            if "regex" in option_data.keys() and option_data["regex"]:
+                options.append(
+                    "R'"
+                    + option_data["waitfor"]
+                    + "'"
+                    + ":"
+                    + STATUS[option_data["status"]]
+                )
+            else:
+                options.append(
+                    option_data["waitfor"] + ":" + STATUS[option_data["status"]]
+                )
+        p.append("\n& " + " ".join(options))
+
+
+def status_notation(p, status, text):
+    if status == None:
+        return
+    p.append("\n* " + STATUS[status] + ":" + text)
 
 
 def construct_commad_block(props):
@@ -124,6 +140,7 @@ def construct_commad_block(props):
     hide_notation(parts, props["hide_output"])
     description_notation(parts, props["desc"])
     waitfor_notation(parts, props["waitfor"], props["ctype"])
+    status_notation(parts, props["status"], props["status_text"])
     return " ".join(parts)
 
 
