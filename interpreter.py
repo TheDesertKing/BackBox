@@ -75,14 +75,14 @@ def timout_notation(p, timeout, ctype):
     if timeout == DEFAULT_TIMEOUT[ctype]:
         return
     else:
-        p.append("t" + str(timeout))
+        p.append("tout" + str(timeout))
 
 
 def sleep_notation(p, sleep):
     if sleep == 0:
         return
     else:
-        p.append("s" + str(sleep))
+        p.append("slp" + str(sleep))
 
 
 def hide_notation(p, hide):
