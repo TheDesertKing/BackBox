@@ -1,9 +1,9 @@
 Structure:
 
-T COND CMD ST SL STAT TOUT SLP HIDE
+T COND CMD ST SL TOUT SLP HIDE
 # DESC
 & WAITFOR
-* STAT
+* STATUS
 
 T = command type (I,R,L)
 COND = condition (if(%%A%% == %%B%%))
@@ -15,7 +15,7 @@ SLP = sleep (s15,s200) [seconds]
 HIDE = hide output (hide)
 DESC = description (send to Backbox via TFTP)
 WAITFOR = wait for conditions ($:S Error:F Suspecious:SUSPCT R'[0-9]':S)
-STAT = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
+STATUS = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
 
 connect 
 I getlastline V> %%CURRENT_PROMPT%%
