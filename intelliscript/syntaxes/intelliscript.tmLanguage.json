@@ -1,0 +1,41 @@
+{
+	"name": "intelliscript",
+	"patterns": [
+		{
+			"include": "#commands"
+		}
+	],
+	"repository": {
+		"commands": {
+			"name": "ic.command.line",
+			"begin": "^(I|R|L)",
+			"end": "$",
+			"patterns": [
+				{
+					"name": "ic.command.internal",
+					"match": "^I"
+				},
+				{
+					"name": "ic.command.remote",
+					"match": "^R"
+				},
+				{
+					"name": "ic.command.local",
+					"match": "^L"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.intelliscript",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.intelliscript",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "ic"
+}
