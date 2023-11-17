@@ -1,4 +1,5 @@
 import json
+import sys
 
 CTYPES_NOTATION = {"internal": "I", "remote": "R", "local": "L"}
 DEFAULT_TIMEOUT = {"internal": 0, "remote": 60, "local": 30}
@@ -145,7 +146,7 @@ def construct_commad_block(props):
 
 
 def main():
-    command_list = parse_commands_file("session_886")
+    command_list = parse_commands_file(sys.argv[1])
     for command in command_list:
         props = get_command_props(command)
         block = construct_commad_block(props)
