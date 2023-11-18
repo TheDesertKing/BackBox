@@ -1,0 +1,8 @@
+make importIC.py's search per word not whole sentence and case insensitive
+py importIC.py abc edf
+should return:
+abc edf
+abc something edf
+abc something aedf
+aedf aabc
+...
