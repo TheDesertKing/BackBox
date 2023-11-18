@@ -144,13 +144,21 @@ def construct_commad_block(props):
     status_notation(parts, props["status"], props["status_text"])
     return " ".join(parts)
 
+    
+def write_ic_file(blocks):
+    content = "\n\n".join(blocks)
+    with open(sys.argv[1] + '.ic', 'wt') as ic_file:
+        ic_file.write(content)
+
 
 def main():
     command_list = parse_commands_file(sys.argv[1])
+    blocks = []
     for command in command_list:
         props = get_command_props(command)
-        block = construct_commad_block(props)
-        print(block)
+        blocks.append(construct_commad_block(props))
+    
+    write_ic_file(blocks)
 
 
 if __name__ == "__main__":
