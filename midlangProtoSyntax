@@ -3,12 +3,8 @@ Structure:
 T COND CMD ST SL TOUT SLP HIDE
 # DESC
 & WAITFOR
-<<<<<<< HEAD
-* STATUS
-=======
 * STAT
 J X DO WHILE LCOND
->>>>>>> 3000858 (start automating download)
 
 V = static test indicating a gotoline
 T = command type (I,R,L)
@@ -21,15 +17,11 @@ SLP = sleep (s15,s200) [seconds]
 HIDE = hide output (hide)
 DESC = description (send to Backbox via TFTP)
 WAITFOR = wait for conditions ($:S Error:F Suspecious:SUSPCT R'[0-9]':S)
-<<<<<<< HEAD
-STATUS = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
-=======
 STAT = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
 J = jump up or down (^,V) 
 X = amount of commands to jump (1,2,6)
 DO WHILE = static text indicating start of a loop
 LCOND = loop condition (%%COUNTER%% > 0)
->>>>>>> 3000858 (start automating download)
 
 connect 
 I getlastline V> %%CURRENT_PROMPT%%
