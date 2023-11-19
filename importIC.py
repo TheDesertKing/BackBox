@@ -22,7 +22,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 def get_signature_name(argv):
     if len(argv) < 2:
-        print("missing IntelliCheck signature name\npython3 importIC.py {SignaureName}")
+        print(f"missing IntelliCheck signature name {MACHINE_ADDRESS}\npython3 importIC.py 'Signaure Name'")
         exit(-1)
 
     return " ".join(argv[1:])
@@ -33,13 +33,13 @@ def backbox_login():
     try:
         sess.get(MACHINE_URL,verify=False)
     except:
-        print("can't connect to backbox machine")
+        print(f"can't connect to backbox machine {MACHINE_ADDRESS}")
         exit(-2)
 
     login_response = sess.post(MACHINE_URL+f"j_security_check",data=f"j_username={USERNAME}&j_password={PASSWORD}",headers={"Content-Type":"application/x-www-form-urlencoded; charset=utf-8"},verify=False)
     if "network" not in login_response.text:
 		# If "network" isn't in the response, the login failed and we weren't redirected to the app
-        print("wrong credentials")
+        print(f"wrong credentials {MACHINE_ADDRESS}")
         exit(-3)
 
     return sess
@@ -56,7 +56,7 @@ def get_matching_signatures(signature_name,all_signatures):
 
 def get_signature_data(matching_signatures):
     if len(matching_signatures) == 0:
-        print("no signature matching the name provided was found")
+        print(f"no signature matching the name provided was found {MACHINE_ADDRESS}")
         exit(-4)
 
     elif len(matching_signatures) == 1:
