@@ -1,5 +1,8 @@
 import json
 import sys
+import os
+
+SAVE_PATH = "./icy/"
 
 CTYPES_NOTATION = {"internal": "I", "remote": "R", "local": "L"}
 DEFAULT_TIMEOUT = {"internal": 0, "remote": 60, "local": 30}
@@ -48,15 +51,19 @@ def condition_notation(p, conditions):
     if not conditions:
         return
     operators = {"1": "and", "2": "or"}
+
+    # these conditions do not need arg2
+    single_arg_conditions = ["isempty","isnotempty","exists"]
     operator = operators[conditions[0]["operator"]]
+
     statement = []
     for c in conditions:
-        if c["arg2"]:
+        if c["condition"] not in single_arg_conditions:
             part = c["arg1"] + " " + c["condition"] + " " + c["arg2"]
         else:
             part = c["arg1"] + " " + c["condition"]
         statement.append(part)
-    p.append("if (" + operator.join(statement) + ")")
+    p.append("if (" + (" "+operator+" ").join(statement) + ")")
 
 
 def save_notation(p, is_save, save_type, is_append, save_to):
@@ -147,7 +154,7 @@ def construct_commad_block(props):
     
 def write_ic_file(blocks):
     content = "\n\n".join(blocks)
-    with open(sys.argv[1] + '.ic', 'wt') as ic_file:
+    with open(SAVE_PATH + os.path.basename(sys.argv[1]) + '.icy', 'wt') as ic_file:
         ic_file.write(content)
 
 
