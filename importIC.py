@@ -1,3 +1,18 @@
+#!/usr/bin/python3
+'''
+IMPORTIC.PY
+
+The script will search and download a signature name containing all arguments,
+prompting a user to pick if multiple are available.
+
+Usage:
+
+./importIC.py name of signature
+(takes multiple arguments)
+
+'''
+
+
 from sys import argv,exit
 import requests
 

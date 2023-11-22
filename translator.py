@@ -1,3 +1,17 @@
+#!/usr/bin/python3
+'''
+TRANSLATOR.PY
+
+This script will translate IntelliCheck commands files (icc) to icy files.
+
+Usage:
+
+./translator.py {signature_name}
+
+
+'''
+
+
 import json
 import sys
 import os
@@ -14,8 +28,12 @@ DEFAULT_WAITFOR = {
 STATUS = {"success": "S", "failure": "F", "suspect": "SUS"}
 
 
-def parse_commands_file(filename):
-    with open(filename, "r") as cfile:
+def parse_commands_file(argv):
+    if len(argv) != 2:
+        print("missing icc file name\n Usage:\n./translator.py {signature_name}")
+        exit(1)
+
+    with open(argv[1], "r") as cfile:
         commands_data = cfile.read()
     commands_json_list = json.loads(commands_data)
     return commands_json_list
@@ -159,7 +177,7 @@ def write_ic_file(blocks):
 
 
 def main():
-    command_list = parse_commands_file(sys.argv[1])
+    command_list = parse_commands_file(sys.argv)
     blocks = []
     for command in command_list:
         props = get_command_props(command)
