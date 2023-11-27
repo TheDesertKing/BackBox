@@ -68,7 +68,7 @@ def type_notation(p, ctype):
 def condition_notation(p, conditions):
     if not conditions:
         return
-    operators = {"1": "and", "2": "or"}
+    operators = {"1": "AND", "2": "OR"}
 
     # these conditions do not need arg2
     single_arg_conditions = ["isempty","isnotempty","exists"]
