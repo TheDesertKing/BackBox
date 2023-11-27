@@ -111,8 +111,10 @@ def get_signature_commands(session_id,sess):
 
 def write_to_file(signature_name,commands):
     # remove characters that might cause issues in file names
-    signature_name = signature_name.replace(">","")
-    signature_name = signature_name.replace(":","")
+    bad_chars = ['>',':','/','*','\\','<',':','|','?']
+    for char in bad_chars:
+        signature_name = signature_name.replace(char,"")
+
     with open(SAVE_PATH + signature_name + '.icc','wt') as file:
         file.write(commands)
 
