@@ -4,10 +4,11 @@ T COND CMD ST SL TOUT SLP HIDE
 # DESC
 & WAITFOR
 * STAT
+J X DO WHILE LCOND
 
 V = static test indicating a gotoline
 T = command type (I,R,L)
-COND = condition (if(%%A%% = %%B%%))
+COND = condition (if(%%A%% == %%B%%))
 CMD = command (echo "123")
 ST = save type and file permissions (>,>>,V>,600>)
 SL = save location (%%VAR%%,abc.txt)
@@ -17,6 +18,10 @@ HIDE = hide output (hide)
 DESC = description (send to Backbox via TFTP)
 WAITFOR = wait for conditions ($:S Error:F Suspecious:SUSPCT R'[0-9]':S)
 STAT = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
+J = jump up or down (^,V) 
+X = amount of commands to jump (1,2,6)
+DO WHILE = static text indicating start of a loop
+LCOND = loop condition (%%COUNTER%% > 0)
 
 connect 
 I getlastline V> %%CURRENT_PROMPT%%
