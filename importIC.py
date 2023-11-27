@@ -26,6 +26,7 @@ USERNAME="admin"
 PASSWORD="1"
 
 SAVE_PATH = "./icc/"
+NAME_MAP_FILE = "./signature_to_filename.map"
 
 MACHINE_URL=f"https://{MACHINE_ADDRESS}/"
 
@@ -38,7 +39,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 def get_signature_name(argv):
     if len(argv) < 2:
         print(f"missing IntelliCheck signature name {MACHINE_ADDRESS}\npython3 importIC.py 'Signaure Name'")
-        exit(-1)
+        exit(41)
 
     return " ".join(argv[1:])
 
@@ -49,13 +50,13 @@ def backbox_login():
         sess.get(MACHINE_URL,verify=False)
     except:
         print(f"can't connect to backbox machine {MACHINE_ADDRESS}")
-        exit(-2)
+        exit(42)
 
     login_response = sess.post(MACHINE_URL+f"j_security_check",data=f"j_username={USERNAME}&j_password={PASSWORD}",headers={"Content-Type":"application/x-www-form-urlencoded; charset=utf-8"},verify=False)
     if "network" not in login_response.text:
 		# If "network" isn't in the response, the login failed and we weren't redirected to the app
         print(f"wrong credentials {MACHINE_ADDRESS}")
-        exit(-3)
+        exit(43)
 
     return sess
 
@@ -72,7 +73,7 @@ def get_matching_signatures(signature_name,all_signatures):
 def get_signature_data(matching_signatures):
     if len(matching_signatures) == 0:
         print(f"no signature matching the name provided was found {MACHINE_ADDRESS}")
-        exit(-4)
+        exit(44)
 
     elif len(matching_signatures) == 1:
         return matching_signatures[0]
@@ -109,16 +110,43 @@ def get_signature_commands(session_id,sess):
     return sess.get(MACHINE_URL + f"rest/data/integrator/session/commands/{session_id}",headers={"Accept":"application/json"}).text
 
 
+def add_names_to_map_file(signature_name,file_name):
+    # before saving file, insert file name, signature original name and machine to map file
+    with open(NAME_MAP_FILE, 'r+') as map_file:
+        map_data = map_file.readlines()
+        is_new_sig = True
+        if signature_name in [sig_name.split(' | ')[0] for sig_name in map_data]:
+            print('Notice: this signature was imported to icy in the past, do you want to continue? ')
+            inp = ''
+            while inp not in ['y','n']:
+                inp = input('[y/n]').lower()
+
+            if inp == 'n':
+                print('Exiting')
+                exit(45)
+
+            else:
+                is_new_sig = False
+
+        if is_new_sig:
+            new_data_mapping = '\n' + signature_name + ' | ' + file_name + ' | ' + MACHINE_ADDRESS
+            map_file.write(new_data_mapping)
+            print(new_data_mapping)
+
+
 def write_to_file(signature_name,commands):
     # remove characters that might cause issues in file names
     bad_chars = ['>',':','/','*','\\','<',':','|','?']
+    file_name = signature_name
     for char in bad_chars:
-        signature_name = signature_name.replace(char,"")
+        file_name = file_name.replace(char,"")
 
-    with open(SAVE_PATH + signature_name + '.icc','wt') as file:
+    add_names_to_map_file(signature_name,file_name)
+
+    with open(SAVE_PATH + file_name + '.icc','wt') as file:
         file.write(commands)
 
-    print(signature_name)
+    print(file_name + ' was saved successfully')
 
 
 def main():
