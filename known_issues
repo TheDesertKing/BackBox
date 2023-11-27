@@ -1,0 +1,5 @@
+Cant write 'if(' as start of command like so:
+
+R if(something something) >> abc
+
+The compiler will confuse it as being a condition
