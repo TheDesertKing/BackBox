@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sys
+import json
 
 
 
@@ -56,10 +57,12 @@ def parse_condition(command_line):
     cond_part = command_line[6:].split(') ')[0]
 
     operator = 'AND' if cond_part.count(' AND ') > 0 else 'OR'
-    operator_id = '1' if operator == 'AND' else '0'
+    operator_id = '1' if operator == 'AND' else '2'
+
     parts = cond_part.split(' '+operator+' ')
     for part in parts:
         data = {'operator':operator_id,'arg2':''}
+        print(data)
 
         data['arg1'] = part.split(' ')[0]
         data['condition'] = part.split(' ')[1]
@@ -100,8 +103,7 @@ def parse_block(block,queue):
         elif line[0] == '*':
             pass
 
-    #print(command_data)
-
+    return command_data
 
 
 def parse_command_blocks(command_blocks):
@@ -111,6 +113,7 @@ def parse_command_blocks(command_blocks):
         queue += 1
         commands_json_list.append(parse_block(block,queue))
 
+    return commands_json_list
 
 
 
@@ -118,6 +121,7 @@ def parse_command_blocks(command_blocks):
 def main():
     command_blocks = get_command_blocks(sys.argv)
     commands_json_list = parse_command_blocks(command_blocks)
+    #print(json.dumps(commands_json_list))
 
 
 main()
