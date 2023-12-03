@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys
+from sys import argv,exit
 import json
 
 
@@ -13,44 +13,51 @@ DEFAULT_WAITFOR = {
 }
 STATUS = {"S": "success", "F": "failure", "SUS": "suspect"}
 DEFAULT_COMMAND_DATA = {
-        "timeout": 0,
-        "sleep": 0,
-        "status": None,
-        "condition": [],
-        "command": "missing command text",
-        "queue": 1,
-        "is_save": False,
-        "is_status": False,
-        "is_append": False,
-        "file_perm": 664,
-        "ctype": "internal",
-        "hide_output": False,
-        "desc": "",
-        "waitfor": "",
-        "save": "",
-        "save_type": "",
-        "error_msg": None
+    "saveFlag": False,
+    "statusFlag": False,
+    "outputAppendToFile": False,
+    "collected": False,
+    "addToFileRepository": False,
+    "saveToFilePermissions": 664,
+    "id": "MISSING ID",
+    "status": None,
+    "queue": 1,
+    "command_TYPE": "MISSING COMMAND_TYPE",
+    "hide_OUTPUT": False,
+    "description": "",
+    "wait_FOR": "MISSING WAIT_FOR",
+    "save_OUTPUT": "",
+    "output_TYPE": "",
+    "timeout": 0,
+    "sleep": 0,
+    "condition": [],
+    "error_MESSAGE": None,
+    "command": "MISSING COMMAND",
+    "session_ID": "MISSING SESSION_ID"
 }
 
 
 def read_icy_file(argv):
-    if len(argv) != 2:
-        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
+if len(argv) != 2:
+print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
 
-    filename = argv[1]
-    with open(filename, 'rt') as icy_file:
-        content = icy_file.read()
+filename = argv[1]
+with open(filename, 'rt') as icy_file:
+content = icy_file.read()
 
-    return content
+return content
 
 
 def get_command_blocks(argv):
-    icy_file_content = read_icy_file(argv)
+icy_file_content = read_icy_file(argv)
 
     return icy_file_content.split("\n\n")
 
 
 def parse_condition(cond):
+    if cond == False:
+        return []
+
     single_arg_conditions = ["isempty","isnotempty","exists"]
     parsed_cond_data = []
 
@@ -60,7 +67,6 @@ def parse_condition(cond):
     parts = cond.split(' '+operator+' ')
     for part in parts:
         data = {'operator':operator_id,'arg2':''}
-        print(data)
 
         data['arg1'] = part.split(' ')[0]
         data['condition'] = part.split(' ')[1]
@@ -72,7 +78,6 @@ def parse_condition(cond):
         parsed_cond_data.append(data)
 
     return parsed_cond_data
-
 
 
 def get_command_line_parts(command_line):
@@ -87,7 +92,7 @@ def get_command_line_parts(command_line):
         remaining_cmd_line = command_line[1:].split(' ')
 
     if 'hide' == remaining_cmd_line[-1]:
-        p['hide'] = 'hide'
+        p['hide'] = True
         remaining_cmd_line = remaining_cmd_line[:-1]
     else:
         p['hide'] = False
@@ -115,17 +120,84 @@ def get_command_line_parts(command_line):
     return p
 
 
+def parse_saveto(saveto):
+    saveto_data = {
+        'statusFlag':False,
+        'saveToFilePermissions':664,
+        'outputAppendToFile':False,
+        'addToFileRepository':False,
+    }
+
+    if saveto == False:
+        return saveto_data
+
+    first_part = saveto.split(' ')[0]
+    second_part = saveto.split(' ')[1]
+
+    saveto_data['statusFlag'] = True
+
+    if '>>' in first_part:
+        saveto_data['outputAppendToFile'] = True
+
+    if first_part[0].isnumeric():
+        try:
+            saveto_data['saveToFilePermissions'] = int(first_part[:3])
+        except:
+            print('improper File Permissions (not numeric)')
+            exit(51)
+
+    if 'V' in first_part:
+        saveto_data['output_TYPE'] = 'variable'
+    else:
+        saveto_data['output_TYPE'] = 'file'
+
+    saveto_data['save_OUTPUT'] = second_part
+
+    return saveto_data
+
+
+def parse_timeout(tout,ctype):
+    if tout == False:
+        return DEFAULT_TIMEOUT[ctype]
+    
+    try:
+        return int(tout[4:])
+    except:
+        print('improper Timeout (not numeric)')
+        exit(52)
+
+
+def parse_sleep(slp):
+    if slp == False:
+        return 0
+    
+    try: 
+        return int(slp[3:])
+    except:
+        print('improper Sleep (not numeric)')
+        exit(53)
+
+
 
 def parse_command_line(command_line):
-    parsed_data = {}
+    cmd_data = {}
     p = get_command_line_parts(command_line)
-    print(p)
 
-    parsed_data['ctype'] = CTYPES_NOTATION[p['ctype']]
-    if 'if (' in command_line[2:6]:
-        parsed_data['condition'] = parse_condition(p['cond'])
+    cmd_data['ctype'] = CTYPES_NOTATION[p['ctype']]
+    cmd_data['condition'] = parse_condition(p['cond'])
+    cmd_data |= parse_saveto(p['saveto'])
+    cmd_data['timeout'] = parse_timeout(p['tout'],cmd_data['ctype'])
+    cmd_data['sleep'] = parse_sleep(p['slp'])
+    cmd_data['hide_OUTPUT'] = p['hide']
 
-    return parsed_data
+    return cmd_data
+
+
+def parse_desc(desc_line):
+    return {'description': desc_line[2:]}
+
+
+def parse_waitfor(line):
 
 
 
@@ -136,8 +208,9 @@ def parse_block(block,queue):
         if line[0] in CTYPES_NOTATION.keys():
             command_data |= parse_command_line(line)
         elif line[0] == '#':
-            pass
+            command_data |= parse_desc(line)
         elif line[0] == '&':
+            command_data |= parse_waitfor(line)
             pass
         elif line[0] == '*':
             pass
@@ -158,7 +231,7 @@ def parse_command_blocks(command_blocks):
 
 
 def main():
-    command_blocks = get_command_blocks(sys.argv)
+    command_blocks = get_command_blocks(argv)
     commands_json_list = parse_command_blocks(command_blocks)
     #print(json.dumps(commands_json_list))
 
