@@ -13,7 +13,7 @@ syntax match Waitfor /^\*.*/
 
 hi def link Saveto String
 hi def link Condition Conditional
-hi def link Remote Define
+hi def link Remote Orange
 hi def link Internal Boolean
 hi def link Local Structure
 hi def link Status Identifier
