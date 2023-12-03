@@ -84,17 +84,22 @@ def condition_notation(p, conditions):
     p.append("if (" + (" "+operator+" ").join(statement) + ")")
 
 
-def save_notation(p, is_save, save_type, is_append, save_to):
+def save_notation(p, is_save, save_type, is_append, save_to, file_perm):
     if not is_save:
         return
     elif save_type == "variable":
-        p.append("V>" + " " + save_to)
+        save_part = "V>" + " " + save_to
     elif save_type == "file" and not is_append:
-        p.append(">" + " " + save_to)
+        save_part = ">" + " " + save_to
     elif save_type == "file" and is_append:
-        p.append(">>" + " " + save_to)
+        save_part = ">>" + " " + save_to
     else:
         raise Exception("save_notation: Can't identify save_type")
+
+    if file_perm != 664:
+        p.append(str(file_perm) + save_part)
+    else:
+        p.append(save_part)
 
 
 def timout_notation(p, timeout, ctype):
@@ -159,7 +164,7 @@ def construct_commad_block(props):
     condition_notation(parts, props["conditions"])
     parts.append(props["command"])
     save_notation(
-        parts, props["is_save"], props["save_type"], props["is_append"], props["save"]
+        parts, props["is_save"], props["save_type"], props["is_append"], props["save"], props["file_perm"]
     )
     timout_notation(parts, props["timeout"], props["ctype"])
     sleep_notation(parts, props["sleep"])
@@ -169,7 +174,7 @@ def construct_commad_block(props):
     status_notation(parts, props["status"], props["status_text"])
     return " ".join(parts)
 
-    
+
 def write_ic_file(blocks):
     content = "\n\n".join(blocks)
     with open(SAVE_PATH + os.path.basename(sys.argv[1]) + '.icy', 'wt') as ic_file:
@@ -182,7 +187,7 @@ def main():
     for command in command_list:
         props = get_command_props(command)
         blocks.append(construct_commad_block(props))
-    
+
     write_ic_file(blocks)
 
 
