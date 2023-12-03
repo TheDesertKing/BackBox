@@ -5,7 +5,6 @@ T COND CMD ST SL TOUT SLP HIDE
 & WAITFOR
 * STAT
 
-V = static test indicating a gotoline
 T = command type (I,R,L)
 COND = condition (if(%%A%% = %%B%%))
 CMD = command (echo "123")
