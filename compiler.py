@@ -50,16 +50,14 @@ def get_command_blocks(argv):
     return icy_file_content.split("\n\n")
 
 
-def parse_condition(command_line):
+def parse_condition(cond):
     single_arg_conditions = ["isempty","isnotempty","exists"]
     parsed_cond_data = []
 
-    cond_part = command_line[6:].split(') ')[0]
-
-    operator = 'AND' if cond_part.count(' AND ') > 0 else 'OR'
+    operator = 'AND' if cond.count(' AND ') > 0 else 'OR'
     operator_id = '1' if operator == 'AND' else '2'
 
-    parts = cond_part.split(' '+operator+' ')
+    parts = cond.split(' '+operator+' ')
     for part in parts:
         data = {'operator':operator_id,'arg2':''}
         print(data)
@@ -77,14 +75,55 @@ def parse_condition(command_line):
 
 
 
+def get_command_line_parts(command_line):
+    p = {}
+
+    p['ctype'] = command_line[0]
+    p['cond'] = command_line[6:].split(') ')[0] if 'if (' in command_line[2:6] else False
+
+    if p['cond']:
+        remaining_cmd_line = command_line[command_line.index(') ')+2:].split(' ')
+    else:
+        remaining_cmd_line = command_line[1:].split(' ')
+
+    if 'hide' == remaining_cmd_line[-1]:
+        p['hide'] = 'hide'
+        remaining_cmd_line = remaining_cmd_line[:-1]
+    else:
+        p['hide'] = False
+
+    if remaining_cmd_line[-1].startswith('slp'):
+        p['slp'] = remaining_cmd_line[-1]
+        remaining_cmd_line = remaining_cmd_line[:-1]
+    else:
+        p['slp'] = False
+
+    if remaining_cmd_line[-1].startswith('tout'):
+        p['tout'] = remaining_cmd_line[-1]
+        remaining_cmd_line = remaining_cmd_line[:-1]
+    else:
+        p['tout'] = False
+
+    if len(remaining_cmd_line) > 1 and remaining_cmd_line[-2].endswith('>'):
+        p['saveto'] = ' '.join(remaining_cmd_line[-2:])
+        remaining_cmd_line = remaining_cmd_line[:-2]
+    else:
+        p['saveto'] = False
+
+    p['cmd'] = ' '.join(remaining_cmd_line)
+
+    return p
 
 
 
 def parse_command_line(command_line):
     parsed_data = {}
-    parsed_data['ctype'] = CTYPES_NOTATION[command_line[0]]
+    p = get_command_line_parts(command_line)
+    print(p)
+
+    parsed_data['ctype'] = CTYPES_NOTATION[p['ctype']]
     if 'if (' in command_line[2:6]:
-        parsed_data['condition'] = parse_condition(command_line)
+        parsed_data['condition'] = parse_condition(p['cond'])
 
     return parsed_data
 
