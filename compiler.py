@@ -198,7 +198,7 @@ def parse_desc(desc_line):
 
 
 def parse_waitfor(line):
-
+    
 
 
 def parse_block(block,queue):
@@ -211,9 +211,10 @@ def parse_block(block,queue):
             command_data |= parse_desc(line)
         elif line[0] == '&':
             command_data |= parse_waitfor(line)
-            pass
         elif line[0] == '*':
             pass
+        
+        if command_data['wait_FOR']
 
     return command_data
 
