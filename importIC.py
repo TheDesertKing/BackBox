@@ -16,15 +16,7 @@ Usage:
 from sys import argv,exit
 import requests
 
-"""
-MACHINE_ADDRESS="calsoft.cloud.backbox.com"
-USERNAME="admin"
-PASSWORD="1q2w3e4r"
-"""
-MACHINE_ADDRESS="172.31.254.118"
-USERNAME="admin"
-PASSWORD="1"
-
+SERVER_CONF_PATH="./118.conf.json"
 SAVE_PATH = "./icc/"
 NAME_MAP_FILE = "./signature_to_filename.map"
 
@@ -34,6 +26,9 @@ from urllib3.exceptions import InsecureRequestWarning
 
 # Suppress the warnings from urllib3
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
+
+def read_conf_file(path):
 
 
 def get_signature_name(argv):
