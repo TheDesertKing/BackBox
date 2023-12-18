@@ -38,18 +38,18 @@ DEFAULT_COMMAND_DATA = {
 
 
 def read_icy_file(argv):
-if len(argv) != 2:
-print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
+    if len(argv) != 2:
+        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
 
-filename = argv[1]
-with open(filename, 'rt') as icy_file:
-content = icy_file.read()
+    filename = argv[1]
+    with open(filename, 'rt') as icy_file:
+        content = icy_file.read()
 
-return content
+    return content
 
 
 def get_command_blocks(argv):
-icy_file_content = read_icy_file(argv)
+    icy_file_content = read_icy_file(argv)
 
     return icy_file_content.split("\n\n")
 
