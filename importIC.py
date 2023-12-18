@@ -15,21 +15,26 @@ Usage:
 
 from sys import argv,exit
 import requests
-
-SERVER_CONF_PATH="./118.conf.json"
-SAVE_PATH = "./icc/"
-NAME_MAP_FILE = "./signature_to_filename.map"
-
-MACHINE_URL=f"https://{MACHINE_ADDRESS}/"
-
 from urllib3.exceptions import InsecureRequestWarning
+from json import load
 
 # Suppress the warnings from urllib3
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
-def read_conf_file(path):
+SERVER_CONF_PATH="./88.conf.json"
+SAVE_PATH = "./icc/"
+NAME_MAP_FILE = "./signature_to_filename.map"
 
+
+def read_conf_file(path):
+    with open(SERVER_CONF_PATH, 'rt') as conf_file:
+        conf_data = load(conf_file)
+    global MACHINE_ADDRESS, USERNAME, PASSWORD, MACHINE_URL
+    MACHINE_ADDRESS = conf_data['MACHINE_ADDRESS']
+    USERNAME = conf_data['USERNAME']
+    PASSWORD = conf_data['PASSWORD']
+    MACHINE_URL = f"https://{MACHINE_ADDRESS}/"
 
 def get_signature_name(argv):
     if len(argv) < 2:
@@ -114,7 +119,7 @@ def add_names_to_map_file(signature_name,file_name):
             print('Notice: this signature was imported to icy in the past, do you want to continue? ')
             inp = ''
             while inp not in ['y','n']:
-                inp = input('[y/n]').lower()
+                inp = input('[y/n]: ').lower()
 
             if inp == 'n':
                 print('Exiting')
@@ -126,7 +131,6 @@ def add_names_to_map_file(signature_name,file_name):
         if is_new_sig:
             new_data_mapping = '\n' + signature_name + ' | ' + file_name + ' | ' + MACHINE_ADDRESS
             map_file.write(new_data_mapping)
-            print(new_data_mapping)
 
 
 def write_to_file(signature_name,commands):
@@ -141,10 +145,14 @@ def write_to_file(signature_name,commands):
     with open(SAVE_PATH + file_name + '.icc','wt') as file:
         file.write(commands)
 
-    print(file_name + ' was saved successfully')
+    print('\n' + file_name + ' was saved successfully')
 
 
 def main():
+    read_conf_file(SERVER_CONF_PATH)
+
+    print("server: " + MACHINE_ADDRESS + "\n")
+
     signature_name = get_signature_name(argv)
 
     sess = backbox_login()
