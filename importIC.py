@@ -22,7 +22,7 @@ from json import load
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
-SERVER_CONF_PATH="./88.conf.json"
+SERVER_CONF_PATH="./conf/88.json"
 SAVE_PATH = "./icc/"
 NAME_MAP_FILE = "./signature_to_filename.map"
 
