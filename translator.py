@@ -139,15 +139,15 @@ def waitfor_notation(p, waitfor, ctype):
         for option_data in waitfor_data:
             if "regex" in option_data.keys() and option_data["regex"]:
                 options.append(
-                    "R'"
+                    STATUS[option_data["status"]]
+                    + ":"
+                    + "R'"
                     + option_data["waitfor"]
                     + "'"
-                    + ":"
-                    + STATUS[option_data["status"]]
                 )
             else:
                 options.append(
-                    option_data["waitfor"] + ":" + STATUS[option_data["status"]]
+                     STATUS[option_data["status"]] + ":" + option_data["waitfor"]
                 )
         p.append("\n& " + " ".join(options))
 
