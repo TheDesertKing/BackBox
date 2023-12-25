@@ -1,8 +1,8 @@
-make importIC.py's search per word not whole sentence and case insensitive
-py importIC.py abc edf
-should return:
-abc edf
-abc something edf
-abc something aedf
-aedf aabc
-...
+* finish compiler so that it is complient with translator
+create parsing for waitfor(results)
+
+* create 'uploader' that takes the data from compiler and uploads it to BB machine
+
+* create VSCODE syntax highlighting
+
+* make installation guide
