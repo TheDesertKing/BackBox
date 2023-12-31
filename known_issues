@@ -1,5 +1,8 @@
-Cant write 'if(' as start of command like so:
+*Cant write 'if(' as start of command like so:
 
 R if(something something) >> abc
 
 The compiler will confuse it as being a condition
+
+*Wait for messages are not read and are set empty by compiler and translator
+

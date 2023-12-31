@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from sys import argv,exit
 import json
+from re import split
 
 
 
@@ -11,7 +12,11 @@ DEFAULT_WAITFOR = {
     "remote": '[{"waitfor":"#","status":"success","message":""}, {"waitfor":"%%CURRENT_PROMPT%%","status":"success","message":""}]',
     "local": '[{"waitfor":"BBP","status":"success","message":""}]',
 }
-STATUS = {"S": "success", "F": "failure", "SUS": "suspect"}
+WAITFOR_STATUS = {
+    'S:':'success',
+    'F:':'failure',
+    'SUSPCT:':'suspect'
+}
 DEFAULT_COMMAND_DATA = {
     "saveFlag": False,
     "statusFlag": False,
@@ -159,7 +164,7 @@ def parse_saveto(saveto):
 def parse_timeout(tout,ctype):
     if tout == False:
         return DEFAULT_TIMEOUT[ctype]
-    
+
     try:
         return int(tout[4:])
     except:
@@ -170,8 +175,8 @@ def parse_timeout(tout,ctype):
 def parse_sleep(slp):
     if slp == False:
         return 0
-    
-    try: 
+
+    try:
         return int(slp[3:])
     except:
         print('improper Sleep (not numeric)')
@@ -198,7 +203,23 @@ def parse_desc(desc_line):
 
 
 def parse_waitfor(line):
-    
+    parsed = split(r'(S:|SUSPCT:|F:)',line[2:])
+
+    key_index = 1
+    while key_index < len(parsed):
+        new_statement = {
+            "waitfor":parsed[key_index+1],
+            "status":WAITFOR_STATUS[parsed[key_index]],
+            "message":""
+        }
+    #Currently message is empty, will maybe implement it into translator then into here
+
+    exit(123)
+#['& ', 'S:', '(tmos) ', 'S:', '@']
+#& S:(tmos) S:@
+
+def parse_default_waitfor(ctype):
+    pass
 
 
 def parse_block(block,queue):
@@ -213,8 +234,9 @@ def parse_block(block,queue):
             command_data |= parse_waitfor(line)
         elif line[0] == '*':
             pass
-        
-        if command_data['wait_FOR']
+
+    if command_data['wait_FOR'] == 'MISSING COMMAND_TYPE':
+        parse_default_waitfor()
 
     return command_data
 
