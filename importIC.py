@@ -27,6 +27,11 @@ SAVE_PATH = "./icc/"
 NAME_MAP_FILE = "./signature_to_filename.map"
 
 
+def write_to_file(path,content):
+    with open(path,'wt') as file:
+        file.write(content)
+
+
 def read_conf_file(path):
     with open(SERVER_CONF_PATH, 'rt') as conf_file:
         conf_data = load(conf_file)
@@ -133,7 +138,7 @@ def add_names_to_map_file(signature_name,file_name):
             map_file.write(new_data_mapping)
 
 
-def write_to_file(signature_name,commands):
+def write_signature_to_file(signature_name,commands):
     # remove characters that might cause issues in file names
     bad_chars = ['>',':','/','*','\\','<',':','|','?']
     file_name = signature_name
@@ -142,8 +147,7 @@ def write_to_file(signature_name,commands):
 
     add_names_to_map_file(signature_name,file_name)
 
-    with open(SAVE_PATH + file_name + '.icc','wt') as file:
-        file.write(commands)
+    write_to_file(SAVE_PATH + file_name + '.icc', commands)
 
     print('\n' + file_name + ' was saved successfully')
 
@@ -164,8 +168,9 @@ def main():
     signature_data = get_signature_data(matching_signatures)
 
     signature_commands = get_signature_commands(signature_data['sessionId'],sess)
+    write_to_file('waitfor',signature_commands)
 
-    write_to_file(signature_data["name"],signature_commands)
+    write_signature_to_file(signature_data["name"],signature_commands)
 
 
 main()
