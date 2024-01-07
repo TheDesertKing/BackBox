@@ -177,7 +177,10 @@ def construct_commad_block(props):
 
 def write_ic_file(blocks):
     content = "\n\n".join(blocks)
-    with open(SAVE_PATH + os.path.basename(sys.argv[1]) + '.icy', 'wt') as ic_file:
+    #remove '.icc' ending
+    filename = sys.argv[1][:-4] if sys.argv[1].endswith('.icc') else sys.argv[1]
+
+    with open(SAVE_PATH + os.path.basename(filename) + '.icy', 'wt') as ic_file:
         ic_file.write(content)
 
 
