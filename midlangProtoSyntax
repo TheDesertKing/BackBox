@@ -10,11 +10,11 @@ COND = condition (if(%%A%% = %%B%%))
 CMD = command (echo "123")
 ST = save type and file permissions (>,>>,V>,600>)
 SL = save location (%%VAR%%,abc.txt)
-TOUT = timeout (t30,t10800) [seconds]
-SLP = sleep (s15,s200) [seconds]
+TOUT = timeout (tout30,tout10800) [seconds]
+SLP = sleep (slp15,slp200) [seconds]
 HIDE = hide output (hide)
 DESC = description (send to Backbox via TFTP)
-WAITFOR = wait for conditions (S:$ F:Error SUSPCT:Suspecious S:R'[0-9]')
+WAITFOR = wait for conditions (S:'$' F:'Error' SUSPCT:'Suspecious' S:R'[0-9]')
 STAT = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED)
 
 connect 
