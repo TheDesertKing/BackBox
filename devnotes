@@ -7,3 +7,7 @@ add functionality on compiler to take session_id and command id data from signat
 * create VSCODE syntax highlighting
 
 * make installation guide
+
+probably never implement:
+* saveto file_repository
+* add site support
