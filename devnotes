@@ -1,5 +1,6 @@
 * finish compiler so that it is complient with translator
-create parsing for waitfor(results)
+add collection on importIC of session_id and command id into signature_data file (previously signature_name_map)
+add functionality on compiler to take session_id and command id data from signature_data file into compiled file
 
 * create 'uploader' that takes the data from compiler and uploads it to BB machine
 
