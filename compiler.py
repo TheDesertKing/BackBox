@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 from sys import argv,exit
 import json
-from re import split
+import re
 
 
 
@@ -92,9 +92,9 @@ def get_command_line_parts(command_line):
     p['cond'] = command_line[6:].split(') ')[0] if 'if (' in command_line[2:6] else False
 
     if p['cond']:
-        remaining_cmd_line = command_line[command_line.index(') ')+2:].split(' ')
+        remaining_cmd_line = command_line[command_line.index(') ')+2:].rstrip().split(' ')
     else:
-        remaining_cmd_line = command_line[1:].split(' ')
+        remaining_cmd_line = command_line[1:].rstrip().split(' ')
 
     if 'hide' == remaining_cmd_line[-1]:
         p['hide'] = True
@@ -188,12 +188,13 @@ def parse_command_line(command_line):
     cmd_data = {}
     p = get_command_line_parts(command_line)
 
-    cmd_data['ctype'] = CTYPES_NOTATION[p['ctype']]
+    cmd_data['command_TYPE'] = CTYPES_NOTATION[p['ctype']]
     cmd_data['condition'] = parse_condition(p['cond'])
     cmd_data |= parse_saveto(p['saveto'])
-    cmd_data['timeout'] = parse_timeout(p['tout'],cmd_data['ctype'])
+    cmd_data['timeout'] = parse_timeout(p['tout'],CTYPES_NOTATION[p['ctype']])
     cmd_data['sleep'] = parse_sleep(p['slp'])
     cmd_data['hide_OUTPUT'] = p['hide']
+    cmd_data['command'] = p['cmd']
 
     return cmd_data
 
@@ -203,29 +204,37 @@ def parse_desc(desc_line):
 
 
 def parse_waitfor(line):
-    parsed = split(r'(S:|SUSPCT:|F:)',line[2:])
-
-    key_index = 1
-    while key_index < len(parsed):
-        new_statement = {
-            "waitfor":parsed[key_index+1],
-            "status":WAITFOR_STATUS[parsed[key_index]],
-            "message":""
-        }
     #Currently message is empty, will maybe implement it into translator then into here
+    success = re.findall(r"S:'(.*?)'",line[2:])
+    suspect = re.findall(r"SUSPCT:'(.*?)'",line[2:])
+    failed = re.findall(r"F:'(.*?)'",line[2:])
+    waitfor_data = {
+        'success':success,
+        'suspect':suspect,
+        'failed':failed
+        }
 
-    exit(123)
-#['& ', 'S:', '(tmos) ', 'S:', '@']
-#& S:(tmos) S:@
+    statements = []
+    for status, values in waitfor_data.items():
+        for val in values:
+            new_statement = {
+                "waitfor":val,
+                "status":status,
+                "message":""
+            }
+            statements.append(new_statement)
+
+    return {'wait_FOR': json.dumps(statements).replace('"','\"').replace(' ','')}
+
 
 def parse_default_waitfor(ctype):
-    pass
+    return {'wait_FOR': DEFAULT_WAITFOR[ctype].replace('"','\"').replace(' ','')}
 
 
 def parse_block(block,queue):
     command_data = DEFAULT_COMMAND_DATA | {'queue': queue}
 
-    for line in block.split('\n'):
+    for line in block.splitlines():
         if line[0] in CTYPES_NOTATION.keys():
             command_data |= parse_command_line(line)
         elif line[0] == '#':
@@ -235,8 +244,8 @@ def parse_block(block,queue):
         elif line[0] == '*':
             pass
 
-    if command_data['wait_FOR'] == 'MISSING COMMAND_TYPE':
-        parse_default_waitfor()
+    if command_data['wait_FOR'] == 'MISSING WAIT_FOR':
+        command_data |= parse_default_waitfor(command_data['command_TYPE'])
 
     return command_data
 
@@ -256,7 +265,7 @@ def parse_command_blocks(command_blocks):
 def main():
     command_blocks = get_command_blocks(argv)
     commands_json_list = parse_command_blocks(command_blocks)
-    #print(json.dumps(commands_json_list))
+    print(json.dumps(commands_json_list))
 
 
 main()
