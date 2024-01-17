@@ -190,6 +190,8 @@ def write_ic_file(signature_name,blocks):
 
     print(file_path + ' succesfully translated')
 
+    return file_path
+
 
 def convert_icc_to_icy(signature_name):
     command_list = parse_commands_file(signature_name)
@@ -198,7 +200,7 @@ def convert_icc_to_icy(signature_name):
         props = get_command_props(command)
         blocks.append(construct_commad_block(props))
 
-    write_ic_file(signature_name,blocks)
+    return write_ic_file(signature_name,blocks)
 
 
 def main():
