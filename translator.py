@@ -28,12 +28,14 @@ DEFAULT_WAITFOR = {
 STATUS = {"success": "S", "failure": "F", "suspect": "SUS"}
 
 
-def parse_commands_file(argv):
+def validate_argv(argv):
     if len(argv) != 2:
-        print("missing icc file name\n Usage:\n./translator.py {signature_name}")
+        print("missing icc file path\n Usage:\n./translator.py {signature_name}")
         exit(1)
 
-    with open(argv[1], "r") as cfile:
+
+def parse_commands_file(filepath):
+    with open(filepath, "r") as cfile:
         commands_data = cfile.read()
     commands_json_list = json.loads(commands_data)
     return commands_json_list
@@ -177,23 +179,29 @@ def construct_commad_block(props):
     return " ".join(parts)
 
 
-def write_ic_file(blocks):
+def write_ic_file(signature_name,blocks):
     content = "\n\n".join(blocks)
     #remove '.icc' ending
-    filename = sys.argv[1][:-4] if sys.argv[1].endswith('.icc') else sys.argv[1]
+    filename = signature_name[:-4] if signature_name.endswith('.icc') else signature_name
 
     with open(SAVE_PATH + os.path.basename(filename) + '.icy', 'wt') as ic_file:
         ic_file.write(content)
 
 
-def main():
-    command_list = parse_commands_file(sys.argv)
+def convert_icc_to_icy(signature_name):
+    command_list = parse_commands_file(signature_name)
     blocks = []
     for command in command_list:
         props = get_command_props(command)
         blocks.append(construct_commad_block(props))
 
-    write_ic_file(blocks)
+    write_ic_file(signature_name,blocks)
+
+
+def main():
+    validate_argv(sys.argv)
+    convert_icc_to_icy(sys.argv[1])
+
 
 
 if __name__ == "__main__":
