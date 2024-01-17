@@ -1,4 +1,5 @@
 node_modules
 icy
 icc
-signature_to_filename.map
+signature_data.map
+compiled
