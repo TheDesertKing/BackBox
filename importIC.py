@@ -43,12 +43,11 @@ def read_conf_file(path):
     PASSWORD = conf_data['PASSWORD']
     MACHINE_URL = f"https://{MACHINE_ADDRESS}/"
 
-def get_signature_search(argv):
-    if len(argv) < 2:
-        print(f"missing IntelliCheck signature name {MACHINE_ADDRESS}\npython3 importIC.py 'Signaure Name'")
-        exit(41)
 
-    return " ".join(argv[1:])
+def validate_argv(argv):
+    if len(argv) < 2:
+        print(f"missing IntelliCheck search\npython3 importIC.py Signaure Search")
+        exit(41)
 
 
 def backbox_login():
@@ -70,9 +69,7 @@ def backbox_login():
 
 def get_matching_signatures(signature_search,all_signatures):
 
-    name_search = signature_search.split(' ')
-
-    matching_signatures = [sig for sig in all_signatures.json() if all([search.lower() in sig["name"].lower() for search in name_search])]
+    matching_signatures = [sig for sig in all_signatures.json() if all([search.lower() in sig["name"].lower() for search in signature_search])]
 
     return matching_signatures
 
@@ -143,23 +140,22 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
 def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands):
     # remove characters that cause issues in file names
     bad_chars = ['>',':','/','*','\\','<',':','|','?']
-    file_name = signature_name
     for char in bad_chars:
-        file_name = file_name.replace(char,"")
+        file_name = signature_name.replace(char,"")
+    file_path = SAVE_PATH + file_name + '.icc'
 
     add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name)
 
-    write_to_file(SAVE_PATH + file_name + '.icc', commands)
+    write_to_file(file_path, commands)
 
-    print('\n' + file_name + ' was saved successfully')
+    print(file_path + ' was saved successfully')
+    return file_path
 
 
-def main():
+def import_signature(signature_search):
     read_conf_file(SERVER_CONF_PATH)
 
     print("server: " + MACHINE_ADDRESS + "\n")
-
-    signature_search = get_signature_search(argv)
 
     sess = backbox_login()
 
@@ -176,8 +172,18 @@ def main():
     # THIS IS FOR TESTING WAITFOR ON compiler.py 
     #write_to_file('waitfor',signature_commands)
 
-    write_signature_to_file(signature_data["name"],signature_data['sessionId'],signature_data['id'],signature_commands)
+    signature_file_path = write_signature_to_file(signature_data["name"],signature_data['sessionId'],signature_data['id'],signature_commands)
+
+    return {'sig_file_path': signature_file_path}
 
 
-main()
+def main():
+    validate_argv(argv)
+
+    import_signature(argv[1:])
+
+
+
+if __name__ == "__main__":
+    main()
 
