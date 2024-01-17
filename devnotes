@@ -8,6 +8,10 @@ new signatures should be uploaded then imported for the sessionId
 existing should be uploaded using the sessionId
 
 * create 'icyget' and 'icyset' macros to download and transform to icy, and compile and upload from icy
+-complete icyget.py
+-create alias icyget
+create icyset.py
+-create alias icyset
 
 * add dynamic field support
 

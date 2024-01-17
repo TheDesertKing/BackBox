@@ -34,8 +34,8 @@ def validate_argv(argv):
         exit(1)
 
 
-def parse_commands_file(filepath):
-    with open(filepath, "r") as cfile:
+def parse_commands_file(cfile_path):
+    with open(cfile_path, "r") as cfile:
         commands_data = cfile.read()
     commands_json_list = json.loads(commands_data)
     return commands_json_list
@@ -184,8 +184,11 @@ def write_ic_file(signature_name,blocks):
     #remove '.icc' ending
     filename = signature_name[:-4] if signature_name.endswith('.icc') else signature_name
 
-    with open(SAVE_PATH + os.path.basename(filename) + '.icy', 'wt') as ic_file:
+    file_path = SAVE_PATH + os.path.basename(filename) + '.icy'
+    with open(file_path, 'wt') as ic_file:
         ic_file.write(content)
+
+    print(file_path + ' succesfully translated')
 
 
 def convert_icc_to_icy(signature_name):
