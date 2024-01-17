@@ -2,8 +2,9 @@
 from sys import argv,exit
 import json
 import re
+import os
 
-
+COMPILED_PATH = "./compiled/"
 
 CTYPES_NOTATION = {"I":"internal", "R": "remote", "L": "local"}
 DEFAULT_TIMEOUT = {"internal": 0, "remote": 60, "local": 30}
@@ -12,10 +13,10 @@ DEFAULT_WAITFOR = {
     "remote": '[{"waitfor":"#","status":"success","message":""}, {"waitfor":"%%CURRENT_PROMPT%%","status":"success","message":""}]',
     "local": '[{"waitfor":"BBP","status":"success","message":""}]',
 }
-WAITFOR_STATUS = {
-    'S:':'success',
-    'F:':'failure',
-    'SUSPCT:':'suspect'
+STATUS = {
+    'S':'success',
+    'F':'failure',
+    'SUS':'suspect'
 }
 DEFAULT_COMMAND_DATA = {
     "saveFlag": False,
@@ -24,7 +25,7 @@ DEFAULT_COMMAND_DATA = {
     "collected": False,
     "addToFileRepository": False,
     "saveToFilePermissions": 664,
-    "id": "MISSING ID",
+    "id": 0,
     "status": None,
     "queue": 1,
     "command_TYPE": "MISSING COMMAND_TYPE",
@@ -38,14 +39,11 @@ DEFAULT_COMMAND_DATA = {
     "condition": [],
     "error_MESSAGE": None,
     "command": "MISSING COMMAND",
-    "session_ID": "MISSING SESSION_ID"
+    "session_ID": 0
 }
 
 
 def read_icy_file(argv):
-    if len(argv) != 2:
-        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
-
     filename = argv[1]
     with open(filename, 'rt') as icy_file:
         content = icy_file.read()
@@ -94,7 +92,7 @@ def get_command_line_parts(command_line):
     if p['cond']:
         remaining_cmd_line = command_line[command_line.index(') ')+2:].rstrip().split(' ')
     else:
-        remaining_cmd_line = command_line[1:].rstrip().split(' ')
+        remaining_cmd_line = command_line[2:].rstrip().split(' ')
 
     if 'hide' == remaining_cmd_line[-1]:
         p['hide'] = True
@@ -206,7 +204,7 @@ def parse_desc(desc_line):
 def parse_waitfor(line):
     #Currently message is empty, will maybe implement it into translator then into here
     success = re.findall(r"S:'(.*?)'",line[2:])
-    suspect = re.findall(r"SUSPCT:'(.*?)'",line[2:])
+    suspect = re.findall(r"SUS:'(.*?)'",line[2:])
     failed = re.findall(r"F:'(.*?)'",line[2:])
     waitfor_data = {
         'success':success,
@@ -231,6 +229,18 @@ def parse_default_waitfor(ctype):
     return {'wait_FOR': DEFAULT_WAITFOR[ctype].replace('"','\"').replace(' ','')}
 
 
+def parse_status(line):
+    status_data = {'statusFlag':True}
+
+    status_notation = line[2:].split(':')[0]
+    status_message = ':'.join(line[2:].split(':')[1:])
+
+    status_data['status'] = STATUS[status_notation]
+    status_data['error_MESSAGE'] = status_message
+
+    return status_data
+
+
 def parse_block(block,queue):
     command_data = DEFAULT_COMMAND_DATA | {'queue': queue}
 
@@ -242,7 +252,7 @@ def parse_block(block,queue):
         elif line[0] == '&':
             command_data |= parse_waitfor(line)
         elif line[0] == '*':
-            pass
+            command_data |= parse_status(line)
 
     if command_data['wait_FOR'] == 'MISSING WAIT_FOR':
         command_data |= parse_default_waitfor(command_data['command_TYPE'])
@@ -259,13 +269,29 @@ def parse_command_blocks(command_blocks):
 
     return commands_json_list
 
+def save_commands_json(filepath,commands_json_list):
+    filename = os.path.basename(filepath)
+    with open(COMPILED_PATH + filename, 'wt') as file:
+        file.write(commands_json_list)
 
+    print(f"compiled successfully: {COMPILED_PATH + filename}")
+
+
+def vailidate_argv(argv):
+    if len(argv) != 2:
+        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
+        exit(54)
 
 
 def main():
+    vailidate_argv(argv)
+
     command_blocks = get_command_blocks(argv)
+
     commands_json_list = parse_command_blocks(command_blocks)
-    print(json.dumps(commands_json_list))
+    #print(json.dumps(commands_json_list))
+    save_commands_json(argv[1],json.dumps(commands_json_list))
+
 
 
 main()
