@@ -122,8 +122,8 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
     with open(SIGNATURE_DATA_FILE, 'r+') as map_file:
         map_data = map_file.readlines()
         is_new_sig = True
-        if signature_name in [sig_name.split(' | ')[0] for sig_name in map_data]:
-            print('Notice: this signature was imported to icy in the past, do you want to continue? ')
+        if signature_name in [sig_data.split(' | ')[0] for sig_data in map_data]:
+            print('Notice: signature with matching name was imported in the past, do you want to continue? ')
             inp = ''
             while inp not in ['y','n']:
                 inp = input('[y/n]: ').lower()
@@ -136,12 +136,12 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
                 is_new_sig = False
 
         if is_new_sig:
-            new_data_mapping = '\n' + signature_name + ' | ' + file_name + ' | ' + MACHINE_ADDRESS + ' | ' + str(signature_sessionId)
+            new_data_mapping = '\n' + signature_name + ' | ' + file_name + ' | ' + MACHINE_ADDRESS + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id)
             map_file.write(new_data_mapping)
 
 
 def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands):
-    # remove characters that might cause issues in file names
+    # remove characters that cause issues in file names
     bad_chars = ['>',':','/','*','\\','<',':','|','?']
     file_name = signature_name
     for char in bad_chars:

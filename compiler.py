@@ -43,6 +43,12 @@ DEFAULT_COMMAND_DATA = {
 }
 
 
+def vailidate_argv(argv):
+    if len(argv) != 2:
+        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
+        exit(54)
+
+
 def read_icy_file(argv):
     filename = argv[1]
     with open(filename, 'rt') as icy_file:
@@ -269,18 +275,13 @@ def parse_command_blocks(command_blocks):
 
     return commands_json_list
 
+
 def save_commands_json(filepath,commands_json_list):
     filename = os.path.basename(filepath)
     with open(COMPILED_PATH + filename, 'wt') as file:
         file.write(commands_json_list)
 
     print(f"compiled successfully: {COMPILED_PATH + filename}")
-
-
-def vailidate_argv(argv):
-    if len(argv) != 2:
-        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
-        exit(54)
 
 
 def main():
