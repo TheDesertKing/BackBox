@@ -1,9 +1,6 @@
-* finish compiler so that it is complient with translator
-
-* add functionality on compiler to take session_id data from signature_data file into compiled file
-
 * create 'uploader' that takes the data from compiler and uploads it to BB machine
 should have different functionality for new signatures and existing ones (if sessionId=0 it's new)
+add functionality on uploader to take session_id and id from signature_data.map file into compiled file
 new signatures should be uploaded then imported for the sessionId
 existing should be uploaded using the sessionId
 
@@ -11,9 +8,11 @@ existing should be uploaded using the sessionId
 -complete icyget.py
 -create alias icyget
 create icyset.py
--create alias icyset
+create alias icyset
 
 * add dynamic field support
+
+* add remediation support
 
 down the road
 * create VSCODE syntax highlighting
