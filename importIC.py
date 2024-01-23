@@ -19,6 +19,7 @@ from sys import argv,exit
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 from json import load
+import icylib
 
 # Suppress the warnings from urllib3
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -29,19 +30,7 @@ SAVE_PATH = "./icc/"
 SIGNATURE_DATA_FILE = "./signature_data.map"
 
 
-def write_to_file(path,content):
-    with open(path,'wt') as file:
-        file.write(content)
-
-
-def read_conf_file(path):
-    with open(SERVER_CONF_PATH, 'rt') as conf_file:
-        conf_data = load(conf_file)
-    global MACHINE_ADDRESS, USERNAME, PASSWORD, MACHINE_URL
-    MACHINE_ADDRESS = conf_data['MACHINE_ADDRESS']
-    USERNAME = conf_data['USERNAME']
-    PASSWORD = conf_data['PASSWORD']
-    MACHINE_URL = f"https://{MACHINE_ADDRESS}/"
+conf = icylib.read_conf_file(SERVER_CONF_PATH)
 
 
 def validate_argv(argv):
@@ -53,15 +42,15 @@ def validate_argv(argv):
 def backbox_login():
     sess = requests.Session()
     try:
-        sess.get(MACHINE_URL,verify=False)
+        sess.get(conf.machine_url,verify=False)
     except:
-        print(f"can't connect to backbox machine {MACHINE_ADDRESS}")
+        print(f"can't connect to backbox machine {conf.machine_ip}")
         exit(42)
 
-    login_response = sess.post(MACHINE_URL+f"j_security_check",data=f"j_username={USERNAME}&j_password={PASSWORD}",headers={"Content-Type":"application/x-www-form-urlencoded; charset=utf-8"},verify=False)
+    login_response = sess.post(conf.machine_url+f"j_security_check",data=f"j_username={conf.username}&j_password={conf.password}",headers={"Content-Type":"application/x-www-form-urlencoded; charset=utf-8"},verify=False)
     if "network" not in login_response.text:
 		# If "network" isn't in the response, the login failed and we weren't redirected to the app
-        print(f"wrong credentials {MACHINE_ADDRESS}")
+        print(f"wrong credentials {conf.machine_ip}")
         exit(43)
 
     return sess
@@ -76,7 +65,7 @@ def get_matching_signatures(signature_search,all_signatures):
 
 def get_signature_data(signature_search,matching_signatures):
     if len(matching_signatures) == 0:
-        print(f"no signature matching the search: {signature_search} was found {MACHINE_ADDRESS}")
+        print(f"no signature matching the search: {signature_search} was found {conf.machine_ip}")
         exit(44)
 
     elif len(matching_signatures) == 1:
@@ -111,7 +100,7 @@ def get_signature_data(signature_search,matching_signatures):
 def request_signature_commands(session_id,sess):
     # due to what seems to be a bug, the sessionCommands always seem to be empty
     # so in order to get them we will use another API call using the sessionId we fetched
-    return sess.get(MACHINE_URL + f"rest/data/integrator/session/commands/{session_id}",headers={"Accept":"application/json"}).text
+    return sess.get(conf.machine_url + f"rest/data/integrator/session/commands/{session_id}",headers={"Accept":"application/json"}).text
 
 
 def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name):
@@ -133,33 +122,32 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
                 is_new_sig = False
 
         if is_new_sig:
-            new_data_mapping = '\n' + signature_name + ' | ' + file_name + ' | ' + MACHINE_ADDRESS + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id)
+            new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id)
             map_file.write(new_data_mapping)
 
 
 def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands):
     # remove characters that cause issues in file names
     bad_chars = ['>',':','/','*','\\','<',':','|','?']
+    file_name = signature_name
     for char in bad_chars:
-        file_name = signature_name.replace(char,"")
+        file_name = file_name.replace(char,"")
     file_path = SAVE_PATH + file_name + '.icc'
 
     add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name)
 
-    write_to_file(file_path, commands)
+    icylib.write_to_file(file_path, commands)
 
     print(file_path + ' was saved successfully')
     return file_path
 
 
 def import_signature(signature_search):
-    read_conf_file(SERVER_CONF_PATH)
-
-    print("server: " + MACHINE_ADDRESS + "\n")
+    print("server: " + conf.machine_ip + "\n")
 
     sess = backbox_login()
 
-    all_signatures = sess.get(MACHINE_URL+"rest/data/intelliChecks/signatures/0/true",headers={"Accept":"application/json"})
+    all_signatures = sess.get(conf.machine_url+"rest/data/intelliChecks/signatures/0/true",headers={"Accept":"application/json"})
 
     matching_signatures = get_matching_signatures(signature_search,all_signatures)
 
