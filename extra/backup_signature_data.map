@@ -1,0 +1,9 @@
+testingos | testingos | 172.31.253.88 | 1635 | 571
+testingos2 | testingos2 | 172.31.253.88 | 1637 | 572
+Palo Alto -> PanOS -> 1.1.3 Ensure 'Enable Log on High DP Load' is enabled - Exported | Palo Alto - PanOS - 1.1.3 Ensure 'Enable Log on High DP Load' is enabled - Exported | 172.31.253.88 | 1629 | 568
+Palo Alto -> PanOS -> 1.1.2 Ensure 'Login Banner' is set - Exported | Palo Alto - PanOS - 1.1.2 Ensure 'Login Banner' is set - Exported | 172.31.253.88 | 1627 | 567
+Palo Alto -> PanOS -> 1.2.1 Ensure 'Permitted IP Addresses' is set to those necessary for device management - Exported | Palo Alto - PanOS - 1.2.1 Ensure 'Permitted IP Addresses' is set to those necessary for device management - Exported | 172.31.253.88 | 1639 | 573
+F5 -> BigIP -> 2.5 Ensure External Users' has access to needed Partitions only - Exported | F5 - BigIP - 2.5 Ensure External Users' has access to needed Partitions only - Exported | 172.31.253.88 | 1373 | 469
+Palo Alto -> PanOS -> 1.1.1.1 Syslog logging should be configured - Exported | Palo Alto - PanOS - 1.1.1.1 Syslog logging should be configured - Exported | 172.31.253.88 | 1633 | 570
+Palo Alto -> PanOS -> 5.1 Ensure that WildFire file size upload limits are maximized - Exported | Palo Alto - PanOS - 5.1 Ensure that WildFire file size upload limits are maximized - Exported | 172.31.253.88 | 1532 | 532
+testingosnew | testingosnew | 172.31.253.88 | 1647 | 577
