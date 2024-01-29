@@ -16,18 +16,13 @@ Usage:
 from icecream import ic
 
 from sys import argv,exit
-import requests
-from urllib3.exceptions import InsecureRequestWarning
 from json import load
 import icylib
-
-# Suppress the warnings from urllib3
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
 SERVER_CONF_PATH="./conf/88.json"
 SAVE_PATH = "./icc/"
-SIGNATURE_DATA_FILE = "./signature_data.map"
+MAP_FILE_PATH = "./signature_data.map"
 
 
 conf = icylib.read_conf_file(SERVER_CONF_PATH)
@@ -37,23 +32,6 @@ def validate_argv(argv):
     if len(argv) < 2:
         print(f"missing IntelliCheck search\npython3 importIC.py Signaure Search")
         exit(41)
-
-
-def backbox_login():
-    sess = requests.Session()
-    try:
-        sess.get(conf.machine_url,verify=False)
-    except:
-        print(f"can't connect to backbox machine {conf.machine_ip}")
-        exit(42)
-
-    login_response = sess.post(conf.machine_url+f"j_security_check",data=f"j_username={conf.username}&j_password={conf.password}",headers={"Content-Type":"application/x-www-form-urlencoded; charset=utf-8"},verify=False)
-    if "network" not in login_response.text:
-		# If "network" isn't in the response, the login failed and we weren't redirected to the app
-        print(f"wrong credentials {conf.machine_ip}")
-        exit(43)
-
-    return sess
 
 
 def get_matching_signatures(signature_search,all_signatures):
@@ -104,8 +82,7 @@ def request_signature_commands(session_id,sess):
 
 
 def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name):
-    # before saving file, insert file name, signature original name and machine to map file
-    with open(SIGNATURE_DATA_FILE, 'r+') as map_file:
+    with open(MAP_FILE_PATH, 'r+') as map_file:
         map_data = map_file.readlines()
         is_new_sig = True
         if signature_name in [sig_data.split(' | ')[0] for sig_data in map_data]:
@@ -122,7 +99,7 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
                 is_new_sig = False
 
         if is_new_sig:
-            new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id)
+            new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id) + '\n'
             map_file.write(new_data_mapping)
 
 
@@ -145,7 +122,7 @@ def write_signature_to_file(signature_name,signature_sessionId,signature_id,comm
 def import_signature(signature_search):
     print("server: " + conf.machine_ip + "\n")
 
-    sess = backbox_login()
+    sess = icylib.backbox_login(conf)
 
     all_signatures = sess.get(conf.machine_url+"rest/data/intelliChecks/signatures/0/true",headers={"Accept":"application/json"})
 
