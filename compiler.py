@@ -278,8 +278,12 @@ def parse_command_blocks(command_blocks):
 
 def save_commands_json(filepath,commands_json_list):
     filename = os.path.basename(filepath)
-    with open(COMPILED_PATH + filename, 'wt') as file:
-        file.write(commands_json_list)
+    if filename.endswith('.icy'):
+        filename = filename[:-4]
+
+    with open(COMPILED_PATH + filename + '.icc', 'wt') as icc_file:
+        #icc_file.write(commands_json_list)
+        json.dump(commands_json_list,icc_file)
 
     print(f"compiled successfully: {COMPILED_PATH + filename}")
 
@@ -291,7 +295,7 @@ def main():
 
     commands_json_list = parse_command_blocks(command_blocks)
     #print(json.dumps(commands_json_list))
-    save_commands_json(argv[1],json.dumps(commands_json_list))
+    save_commands_json(argv[1],commands_json_list)
 
 
 
