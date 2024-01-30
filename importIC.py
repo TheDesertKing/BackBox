@@ -25,9 +25,6 @@ SAVE_PATH = "./icc/"
 MAP_FILE_PATH = "./signature_data.map"
 
 
-conf = icylib.read_conf_file(SERVER_CONF_PATH)
-
-
 def validate_argv(argv):
     if len(argv) < 2:
         print(f"missing IntelliCheck search\npython3 importIC.py Signaure Search")
@@ -41,7 +38,7 @@ def get_matching_signatures(signature_search,all_signatures):
     return matching_signatures
 
 
-def get_signature_data(signature_search,matching_signatures):
+def get_signature_data(signature_search,matching_signatures,conf):
     if len(matching_signatures) == 0:
         print(f"no signature matching the search: {signature_search} was found {conf.machine_ip}")
         exit(44)
@@ -75,7 +72,7 @@ def get_signature_data(signature_search,matching_signatures):
                 return matching_signatures[picked_index-1]
 
 
-def request_signature_commands(session_id,sess):
+def request_signature_commands(session_id,sess,conf):
     # due to what seems to be a bug, the sessionCommands always seem to be empty
     # so in order to get them we will use another API call using the sessionId we fetched
     return sess.get(conf.machine_url + f"rest/data/integrator/session/commands/{session_id}",headers={"Accept":"application/json"}).text
@@ -120,6 +117,8 @@ def write_signature_to_file(signature_name,signature_sessionId,signature_id,comm
 
 
 def import_signature(signature_search):
+    conf = icylib.read_conf_file(SERVER_CONF_PATH)
+
     print("server: " + conf.machine_ip + "\n")
 
     sess = icylib.backbox_login(conf)
@@ -128,7 +127,7 @@ def import_signature(signature_search):
 
     matching_signatures = get_matching_signatures(signature_search,all_signatures)
 
-    signature_data = get_signature_data(signature_search,matching_signatures)
+    signature_data = get_signature_data(signature_search,matching_signatures,conf)
     #ic(signature_data)
 
     signature_commands = request_signature_commands(signature_data['sessionId'],sess)
