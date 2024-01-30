@@ -50,8 +50,6 @@ DEFAULT_SIGNATURE_DATA = {
     "optionsForSignature": []
 }
 
-conf = icylib.read_conf_file(SERVER_CONF_PATH)
-
 
 def get_signature_map_data(icc_file_name,machine_ip):
     with open(MAP_FILE_PATH, 'r') as map_file:
@@ -59,9 +57,9 @@ def get_signature_map_data(icc_file_name,machine_ip):
 
     for line in map_file_lines:
         line = line.rstrip()
-        signature_name,iter_icc_file_name,iter_machine_ip,sessionId,ID = line.split(' | ')
+        signature_name,iter_icc_file_name,iter_machine_ip,sessionId,signature_id = line.split(' | ')
         if icc_file_name == iter_icc_file_name and machine_ip == iter_machine_ip:
-            return {'name':signature_name,'sessionId':sessionId,'id':ID}
+            return {'name':signature_name,'sessionId':sessionId,'id':signature_id}
 
     return {'name':'','sessionId':0,'id':0}
 
@@ -84,16 +82,24 @@ def validate_argv(argv):
         exit(1)
 
 
-def get_signature_data(icc_file_path,map_data):
+def get_product_options(signature_id,sess,machine_url):
+    headers = {'Accept':'application/json','Content-Type':'application/json'}
+    product_options_data = sess.post(machine_url + 'rest/data/intelliChecks/signatures/options/in',data=f'[{signature_id}]',headers=headers)
 
+    return [p['optionId'] for p in product_options_data.json()]
+
+
+def get_signature_data(icc_file_path,icc_file_name,sess,conf):
+    map_data = get_signature_map_data(icc_file_name,conf.machine_ip)
     signature_commands = get_signature_commands(icc_file_path)
+    product_options = get_product_options(map_data['id'],sess,conf.machine_url)
 
-    return DEFAULT_SIGNATURE_DATA | map_data | {'sessionCommands':signature_commands}
+    return DEFAULT_SIGNATURE_DATA | map_data | {'sessionCommands':signature_commands} | {'optionsForSignature' : product_options}
 
 
-def add_data_to_map_file(signature_name,icc_file_name,machine_ip,sessionId,ID):
+def add_data_to_map_file(signature_name,icc_file_name,machine_ip,sessionId,signature_id):
     with open(MAP_FILE_PATH, 'a') as map_file:
-        new_data_mapping = signature_name + ' | ' + icc_file_name + ' | ' + machine_ip + ' | ' + str(sessionId) + ' | '+ str(ID) + '\n'
+        new_data_mapping = signature_name + ' | ' + icc_file_name + ' | ' + machine_ip + ' | ' + str(sessionId) + ' | '+ str(signature_id) + '\n'
         map_file.write(new_data_mapping)
 
 
@@ -131,12 +137,11 @@ def update_signature(signature_data,sess,conf,headers):
 
     if response.text != 'true':
         print(f"failed to update signature {signature_data['name']} on {conf.machine_ip}")
-        exit(3)
+        exit(4)
 
 
-def upload_signature_data(signature_data,icc_file_name,conf):
+def upload_signature_data(signature_data,icc_file_name,sess,conf):
 
-    sess = icylib.backbox_login(conf)
     headers={"Accept":"application/json","Content-Type":"application/json;charset=UTF-8"}
 
     if signature_data['name'] == "":
@@ -147,20 +152,29 @@ def upload_signature_data(signature_data,icc_file_name,conf):
         update_signature(signature_data,sess,conf,headers)
 
 
+def upload_signature_to_server(icc_file_path):
 
-def main():
-    validate_argv(sys.argv)
+    conf = icylib.read_conf_file(SERVER_CONF_PATH)
+    sess = icylib.backbox_login(conf)
 
-    icc_file_path = sys.argv[1]
     icc_file_name = parse_signature_name(icc_file_path)
     print(f"Uploading:\t{icc_file_name}\nTo:\t{conf.machine_ip}")
 
-    map_data = get_signature_map_data(icc_file_name,conf.machine_ip)
+    signature_data = get_signature_data(icc_file_path,icc_file_name,sess,conf)
 
-    signature_data = get_signature_data(icc_file_path,map_data)
-
-    upload_signature_data(signature_data,icc_file_name,conf)
+    upload_signature_data(signature_data,icc_file_name,sess,conf)
 
     print("\nUpload successful")
 
-main()
+
+def main():
+
+    validate_argv(sys.argv)
+
+    icc_file_path = sys.argv[1]
+
+    upload_signature_to_server(icc_file_path)
+
+
+if __name__ == "__main__":
+    main()
