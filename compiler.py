@@ -45,20 +45,19 @@ DEFAULT_COMMAND_DATA = {
 
 def vailidate_argv(argv):
     if len(argv) != 2:
-        print("missing icy file name\n Usage:\n./compiler.py {signature_name}")
+        print("missing icy file name\n Usage:\n./compiler.py signature_name")
         exit(54)
 
 
-def read_icy_file(argv):
-    filename = argv[1]
-    with open(filename, 'rt') as icy_file:
+def read_icy_file(file_path):
+    with open(file_path, 'rt') as icy_file:
         content = icy_file.read()
 
     return content
 
 
-def get_command_blocks(argv):
-    icy_file_content = read_icy_file(argv)
+def get_command_blocks(file_path):
+    icy_file_content = read_icy_file(file_path)
 
     return icy_file_content.split("\n\n")
 
@@ -278,25 +277,35 @@ def parse_command_blocks(command_blocks):
 
 def save_commands_json(filepath,commands_json_list):
     filename = os.path.basename(filepath)
-    if filename.endswith('.icy'):
+    if filename.endswith('.icy') or filename.endswith('.icc'):
         filename = filename[:-4]
 
-    with open(COMPILED_PATH + filename + '.icc', 'wt') as icc_file:
+    icc_file_path = COMPILED_PATH + filename + '.icc'
+    with open(icc_file_path, 'wt') as icc_file:
         #icc_file.write(commands_json_list)
         json.dump(commands_json_list,icc_file)
 
-    print(f"compiled successfully: {COMPILED_PATH + filename}")
+    print(f"compiled successfully: {icc_file_path}")
+
+    return icc_file_path
+
+
+def compile_icy_to_icc(file_path):
+    command_blocks = get_command_blocks(file_path)
+
+    commands_json_list = parse_command_blocks(command_blocks)
+    #print(json.dumps(commands_json_list))
+    icc_file_path = save_commands_json(file_path,commands_json_list)
+
+    return icc_file_path
 
 
 def main():
     vailidate_argv(argv)
 
-    command_blocks = get_command_blocks(argv)
-
-    commands_json_list = parse_command_blocks(command_blocks)
-    #print(json.dumps(commands_json_list))
-    save_commands_json(argv[1],commands_json_list)
+    compile_icy_to_icc(argv[1])
 
 
 
-main()
+if __name__ == "__main__":
+    main()
