@@ -27,6 +27,8 @@ import icylib
 import os
 import json
 import requests
+from rich import print
+# Overriding default print with colored one
 from urllib3.exceptions import InsecureRequestWarning
 # Suppress the warnings from urllib3
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -94,7 +96,8 @@ def get_signature_data(icc_file_path,icc_file_name,sess,conf):
     signature_commands = get_signature_commands(icc_file_path)
     product_options = get_product_options(map_data['id'],sess,conf.machine_url)
 
-    return DEFAULT_SIGNATURE_DATA | map_data | {'sessionCommands':signature_commands} | {'optionsForSignature' : product_options}
+    signature_data = DEFAULT_SIGNATURE_DATA | map_data | {'sessionCommands':signature_commands} | {'optionsForSignature' : product_options}
+    return signature_data
 
 
 def add_data_to_map_file(signature_name,icc_file_name,machine_ip,sessionId,signature_id):
@@ -161,6 +164,7 @@ def upload_signature_to_server(icc_file_path):
     print(f"Uploading:\t{icc_file_name}\nTo:\t{conf.machine_ip}")
 
     signature_data = get_signature_data(icc_file_path,icc_file_name,sess,conf)
+    #print(json.dumps(signature_data,indent=1))
 
     upload_signature_data(signature_data,icc_file_name,sess,conf)
 
