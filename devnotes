@@ -1,9 +1,3 @@
-* create 'uploader' that takes the data from compiler and uploads it to BB machine
--insert product selection from /intelliChecks/signatures/options/in into optionsForSignature field ("optionsForSignature" is always null from getAllIntelliChecks call)
-same for sessionDynamicFields,tags
-compensate for yet-to-be-parsed fields used when uploading:
-	accessRestriction:"predefined"
-	
 * add multiline condition support for translator and compiler
 
 * add dynamic field support
