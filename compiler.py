@@ -3,6 +3,7 @@ from sys import argv,exit
 import json
 import re
 import os
+import icylib
 
 COMPILED_PATH = "./compiled/"
 
@@ -130,7 +131,7 @@ def get_command_line_parts(command_line):
 
 def parse_saveto(saveto):
     saveto_data = {
-        'statusFlag':False,
+        'saveFlag':False,
         'saveToFilePermissions':664,
         'outputAppendToFile':False,
         'addToFileRepository':False,
@@ -142,7 +143,7 @@ def parse_saveto(saveto):
     first_part = saveto.split(' ')[0]
     second_part = saveto.split(' ')[1]
 
-    saveto_data['statusFlag'] = True
+    saveto_data['saveFlag'] = True
 
     if '>>' in first_part:
         saveto_data['outputAppendToFile'] = True
@@ -294,7 +295,8 @@ def compile_icy_to_icc(file_path):
     command_blocks = get_command_blocks(file_path)
 
     commands_json_list = parse_command_blocks(command_blocks)
-    #print(json.dumps(commands_json_list))
+    icylib.write_to_file('piled',json.dumps(commands_json_list,indent=2))
+    #print(json.dumps(commands_json_list,indent=2))
     icc_file_path = save_commands_json(file_path,commands_json_list)
 
     return icc_file_path

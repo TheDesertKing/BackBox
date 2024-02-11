@@ -1,27 +1,4 @@
 #!/usr/bin/python3
-"""
-new signature:
-    default:
-    "id": 0,
-    "description": "",
-    "predefined": false,
-    "signatureType": "Operations",
-    "sessionId": 0,
-    "remediationSessionId": 0,
-    "siteId": 0,
-    "siteName": null,
-    "tags": [],
-    "document": null,
-    "remediationCommands": [],
-    "restricted": false,
-    "optionsForSignature": []
-
-    to fill:
-        name: str,signature name
-    to fill after creating:
-        id
-        sessionId
-"""
 import sys
 import icylib
 import os
@@ -91,15 +68,20 @@ def get_product_options(signature_id,sess):
     return {'optionsForSignature':[p['optionId'] for p in product_options_data.json()]}
 
 
-def get_data_from_all_signatures_call(all_signatures_json,signature_id):
+def find_signature_by_ids(all_signatures_json,signature_data):
+    for sig in all_signatures_json:
+        if str(sig['id']) == signature_data['id'] and str(sig['sessionId']) == signature_data['sessionId']:
+            return sig
+
+    print(f"signature {signature_data['name']} existed once on {conf.machine_ip} but no longer does")
+    exit(3)
+
+
+def get_peripheral_data(all_signatures_json,signature_data):
     peripheral_data = {}
-    signature_data = [sig for sig in all_signatures_json if str(sig['id']) == signature_id][0]
+    signature_data = find_signature_by_ids(all_signatures_json,signature_data)
 
-    if not signature_data:
-        print(f"error finding peripheral data\nsignature ID: {signature_id}")
-        exit(5)
-
-    for key in ['description','signatureType','tags','restricted']:
+    for key in ['description','predefined','signatureType','siteId','tags','document','restricted']:
         peripheral_data[key] = signature_data[key]
 
     return peripheral_data
@@ -131,29 +113,15 @@ def create_signature(signature_data,sess,headers):
         add_data_to_map_file(signature_data['name'],signature_data['name'],conf.machine_ip,resp_json['sessionId'],resp_json['id'])
 
 
-def find_signature_by_ids(all_signatures_json,signature_data):
-    for sig in all_signatures_json:
-        if str(sig['id']) == signature_data['id'] and str(sig['sessionId']) == signature_data['sessionId']:
-            return sig
-
-    return ''
-
-
 def update_signature(signature_data,sess,headers):
     all_signatures_json = sess.get(conf.machine_url+"rest/data/intelliChecks/signatures/0/true",headers={"Accept":"application/json"}).json()
 
-    existing_sig_data = find_signature_by_ids(all_signatures_json,signature_data)
-
-    if existing_sig_data == '':
-        print(f"signature {signature_data['name']} existed once on {conf.machine_ip} but no longer does")
-        exit(3)
-
     product_options = get_product_options(signature_data['id'],sess)
-    peripheral_data = get_data_from_all_signatures_call(all_signatures_json,signature_data['id'])
+    peripheral_data = get_peripheral_data(all_signatures_json,signature_data)
+    complete_sig_data = signature_data | product_options | peripheral_data
+    #icylib.write_to_file('loader', json.dumps(complete_sig_data,indent=1))
 
-    complete_sig_data = existing_sig_data | signature_data | product_options | peripheral_data
     response = sess.put(conf.machine_url+"rest/data/intelliChecks/signatures/false",json=complete_sig_data,headers=headers)
-
     if response.text != 'true':
         print(f"failed to update signature {signature_data['name']} on {conf.machine_ip}")
         exit(4)
