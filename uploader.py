@@ -53,14 +53,14 @@ DEFAULT_SIGNATURE_DATA = {
 }
 
 
-def get_signature_map_data(icc_file_name,machine_ip):
+def get_signature_map_data(icc_file_name):
     with open(MAP_FILE_PATH, 'r') as map_file:
         map_file_lines = map_file.readlines()
 
     for line in map_file_lines:
         line = line.rstrip()
         signature_name,iter_icc_file_name,iter_machine_ip,sessionId,signature_id = line.split(' | ')
-        if icc_file_name == iter_icc_file_name and machine_ip == iter_machine_ip:
+        if icc_file_name == iter_icc_file_name and conf.machine_ip == iter_machine_ip:
             return {'name':signature_name,'sessionId':sessionId,'id':signature_id}
 
     return {'name':'','sessionId':0,'id':0}
@@ -84,19 +84,32 @@ def validate_argv(argv):
         exit(1)
 
 
-def get_product_options(signature_id,sess,machine_url):
+def get_product_options(signature_id,sess):
     headers = {'Accept':'application/json','Content-Type':'application/json'}
-    product_options_data = sess.post(machine_url + 'rest/data/intelliChecks/signatures/options/in',data=f'[{signature_id}]',headers=headers)
+    product_options_data = sess.post(conf.machine_url + 'rest/data/intelliChecks/signatures/options/in',data=f'[{signature_id}]',headers=headers)
 
-    return [p['optionId'] for p in product_options_data.json()]
+    return {'optionsForSignature':[p['optionId'] for p in product_options_data.json()]}
 
 
-def get_signature_data(icc_file_path,icc_file_name,sess,conf):
-    map_data = get_signature_map_data(icc_file_name,conf.machine_ip)
+def get_data_from_all_signatures_call(all_signatures_json,signature_id):
+    peripheral_data = {}
+    signature_data = [sig for sig in all_signatures_json if str(sig['id']) == signature_id][0]
+
+    if not signature_data:
+        print(f"error finding peripheral data\nsignature ID: {signature_id}")
+        exit(5)
+
+    for key in ['description','signatureType','tags','restricted']:
+        peripheral_data[key] = signature_data[key]
+
+    return peripheral_data
+
+
+def get_signature_data(icc_file_path,icc_file_name,sess):
+    map_data = get_signature_map_data(icc_file_name)
     signature_commands = get_signature_commands(icc_file_path)
-    product_options = get_product_options(map_data['id'],sess,conf.machine_url)
 
-    signature_data = DEFAULT_SIGNATURE_DATA | map_data | {'sessionCommands':signature_commands} | {'optionsForSignature' : product_options}
+    signature_data = DEFAULT_SIGNATURE_DATA | map_data | {'sessionCommands':signature_commands}
     return signature_data
 
 
@@ -106,7 +119,7 @@ def add_data_to_map_file(signature_name,icc_file_name,machine_ip,sessionId,signa
         map_file.write(new_data_mapping)
 
 
-def create_signature(signature_data,sess,conf,headers):
+def create_signature(signature_data,sess,headers):
         response = sess.post(conf.machine_url+"rest/data/intelliChecks/signatures/false",json=signature_data,headers=headers)
 
         if response.status_code == 500:
@@ -126,7 +139,7 @@ def find_signature_by_ids(all_signatures_json,signature_data):
     return ''
 
 
-def update_signature(signature_data,sess,conf,headers):
+def update_signature(signature_data,sess,headers):
     all_signatures_json = sess.get(conf.machine_url+"rest/data/intelliChecks/signatures/0/true",headers={"Accept":"application/json"}).json()
 
     existing_sig_data = find_signature_by_ids(all_signatures_json,signature_data)
@@ -135,7 +148,10 @@ def update_signature(signature_data,sess,conf,headers):
         print(f"signature {signature_data['name']} existed once on {conf.machine_ip} but no longer does")
         exit(3)
 
-    complete_sig_data = existing_sig_data | signature_data
+    product_options = get_product_options(signature_data['id'],sess)
+    peripheral_data = get_data_from_all_signatures_call(all_signatures_json,signature_data['id'])
+
+    complete_sig_data = existing_sig_data | signature_data | product_options | peripheral_data
     response = sess.put(conf.machine_url+"rest/data/intelliChecks/signatures/false",json=complete_sig_data,headers=headers)
 
     if response.text != 'true':
@@ -143,30 +159,31 @@ def update_signature(signature_data,sess,conf,headers):
         exit(4)
 
 
-def upload_signature_data(signature_data,icc_file_name,sess,conf):
+def upload_signature_data(signature_data,icc_file_name,sess):
 
     headers={"Accept":"application/json","Content-Type":"application/json;charset=UTF-8"}
 
     if signature_data['name'] == "":
         signature_data |= {'name':icc_file_name}
-        create_signature(signature_data,sess,conf,headers)
+        create_signature(signature_data,sess,headers)
 
     else:
-        update_signature(signature_data,sess,conf,headers)
+        update_signature(signature_data,sess,headers)
 
 
 def upload_signature_to_server(icc_file_path):
 
+    global conf
     conf = icylib.read_conf_file(SERVER_CONF_PATH)
     sess = icylib.backbox_login(conf)
 
     icc_file_name = parse_signature_name(icc_file_path)
     print(f"Uploading:\t{icc_file_name}\nTo:\t{conf.machine_ip}")
 
-    signature_data = get_signature_data(icc_file_path,icc_file_name,sess,conf)
+    signature_data = get_signature_data(icc_file_path,icc_file_name,sess)
     #print(json.dumps(signature_data,indent=1))
 
-    upload_signature_data(signature_data,icc_file_name,sess,conf)
+    upload_signature_data(signature_data,icc_file_name,sess)
 
     print("\nUpload successful")
 
