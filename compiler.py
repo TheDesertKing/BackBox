@@ -77,8 +77,13 @@ def parse_condition(cond):
     for part in parts:
         data = {'operator':operator_id,'arg2':''}
 
-        data['arg1'] = part.split(' ')[0]
-        data['condition'] = part.split(' ')[1]
+        variable,condition = part.split(' ')[:2]
+        data['arg1'] = variable
+        if condition == '>':
+            condition = 'greater'
+        if condition == '<':
+            condition = 'less'
+        data['condition'] = condition
 
         if data['condition'] not in single_arg_conditions:
             # in case there is a space in arg2
