@@ -1,13 +1,19 @@
 * add multiline condition support for translator and compiler
 
+* add '||' and '&&' as counterparts to 'OR' and 'AND'
+
 * add dynamic field support
 
 * add remediation support
+
+* add 'ignore timeout' or 'extend timeout to 60 and 30 for both types' for icyget command
 
 down the road
 * create VSCODE syntax highlighting
 
 * make installation guide
+
+* changing icy file name doesn't affect signature map, the tracking should insue, either by session_id and id or by signature name
 
 probably never implement:
 * saveto file_repository

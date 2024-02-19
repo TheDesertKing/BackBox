@@ -49,7 +49,7 @@ def get_signature_data(signature_search,matching_signatures):
     else:
         signature_names = [sig["name"] for sig in matching_signatures]
         index = 1
-        for name in signature_names:
+        for name in sorted(signature_names):
             print(f"[{index}] {name}")
             index += 1
 
