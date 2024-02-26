@@ -1,3 +1,7 @@
+*Can't use redirect in shell command if it's at the end like so:
+cat abc > file
+as it would compile to BackBox's saveto filename
+
 *Cant write 'if(' as start of command like so:
 R if(something something) >> abc
 The compiler will confuse it as being a condition

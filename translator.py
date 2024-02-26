@@ -166,7 +166,7 @@ def construct_commad_block(props):
     parts = []
     type_notation(parts, props["ctype"])
     condition_notation(parts, props["conditions"])
-    parts.append(props["command"])
+    parts.append(props["command"].replace('>','\>'))
     save_notation(
         parts, props["is_save"], props["save_type"], props["is_append"], props["save"], props["file_perm"]
     )

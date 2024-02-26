@@ -123,7 +123,10 @@ def get_command_line_parts(command_line):
     else:
         p['tout'] = False
 
-    if len(remaining_cmd_line) > 1 and remaining_cmd_line[-2].endswith('>'):
+    if remaining_cmd_line[-2] == '\>':
+        remaining_cmd_line[-2] = '>'
+        p['saveto'] = False
+    elif len(remaining_cmd_line) > 1 and remaining_cmd_line[-2].endswith('>'):
         p['saveto'] = ' '.join(remaining_cmd_line[-2:])
         remaining_cmd_line = remaining_cmd_line[:-2]
     else:

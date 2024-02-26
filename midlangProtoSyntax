@@ -8,7 +8,7 @@ T COND CMD ST SL TOUT SLP HIDE
 T = command type (I,R,L)
 COND = condition (if(%%A%% = %%B%%))
 CMD = command (echo "123")
-ST = save type and file permissions (>,>>,V>,600>)
+ST = save type and file permissions (>,>>,V>,600>) {\> is regarded as > being part of the command}
 SL = save location (%%VAR%%,abc.txt)
 TOUT = timeout (tout30,tout10800) [seconds]
 SLP = sleep (slp15,slp200) [seconds]

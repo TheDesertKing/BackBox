@@ -1,6 +1,10 @@
 * add multiline condition support for translator and compiler
 
+* refractor translator and compiler parsing to allow more flexable lines ( 0 or more empty lines between lines, multi line condition and waitfors)
+
 * add '||' and '&&' as counterparts to 'OR' and 'AND'
+
+* add icy specific comments
 
 * add dynamic field support
 
