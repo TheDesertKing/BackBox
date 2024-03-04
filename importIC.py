@@ -20,7 +20,7 @@ from json import load
 import icylib
 
 
-SERVER_CONF_PATH="./conf/88.json"
+SERVER_CONF_PATH="./conf/69.json"
 SAVE_PATH = "./icc/"
 MAP_FILE_PATH = "./signature_data.map"
 

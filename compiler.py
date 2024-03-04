@@ -57,10 +57,16 @@ def read_icy_file(file_path):
     return content
 
 
+def remove_extra_newlines(icy_file_content):
+    content_lines = re.sub(r'[\n]{2,}', '\n\n', icy_file_content)
+
+    return content_lines
+
+
 def get_command_blocks(file_path):
     icy_file_content = read_icy_file(file_path)
 
-    return icy_file_content.split("\n\n")
+    return remove_extra_newlines(icy_file_content).split('\n\n')
 
 
 def parse_condition(cond):

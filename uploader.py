@@ -11,7 +11,7 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 MAP_FILE_PATH = "./signature_data.map"
-SERVER_CONF_PATH="./conf/88.json"
+SERVER_CONF_PATH="./conf/69.json"
 
 DEFAULT_SIGNATURE_DATA = {
     "id": 0,
