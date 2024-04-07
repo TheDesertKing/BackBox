@@ -2,6 +2,12 @@ import json
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 
+CONF_FILE_PATH = './conf/88.json'
+ICY_PATH = "./icy/"
+ICC_PATH = "./icc/"
+COMPILED_PATH = "./compiled/"
+MAP_FILE_PATH = "./signature_data.map"
+
 # Suppress the warnings from urllib3
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
@@ -36,7 +42,7 @@ class Conf:
         self.machine_url = f"https://{machine_ip}/"
 
 
-def read_conf_file(path):
+def read_conf_file(path=CONF_FILE_PATH):
     with open(path, 'rt') as conf_file:
         conf_data = json.load(conf_file)
 

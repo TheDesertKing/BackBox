@@ -20,11 +20,6 @@ from json import load
 import icylib
 
 
-SERVER_CONF_PATH="./conf/69.json"
-SAVE_PATH = "./icc/"
-MAP_FILE_PATH = "./signature_data.map"
-
-
 def validate_argv(argv):
     if len(argv) < 2:
         print(f"missing IntelliCheck search\npython3 importIC.py Signaure Search")
@@ -47,9 +42,10 @@ def get_signature_data(signature_search,matching_signatures):
         return matching_signatures[0]
 
     else:
-        signature_names = [sig["name"] for sig in matching_signatures]
+        signature_names = sorted([sig["name"] for sig in matching_signatures])
+        print(signature_names)
         index = 1
-        for name in sorted(signature_names):
+        for name in signature_names:
             print(f"[{index}] {name}")
             index += 1
 
@@ -69,7 +65,7 @@ def get_signature_data(signature_search,matching_signatures):
                 print("index picked is out of range, try again")
 
             else:
-                return matching_signatures[picked_index-1]
+                return [sig for sig in matching_signatures if sig["name"] == signature_names[picked_index-1]][0]
 
 
 def request_signature_commands(session_id,sess):
@@ -79,7 +75,7 @@ def request_signature_commands(session_id,sess):
 
 
 def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name):
-    with open(MAP_FILE_PATH, 'r+') as map_file:
+    with open(icylib.MAP_FILE_PATH, 'r+') as map_file:
         map_data = map_file.readlines()
         is_new_sig = True
         if signature_name in [sig_data.split(' | ')[0] for sig_data in map_data]:
@@ -106,7 +102,7 @@ def write_signature_to_file(signature_name,signature_sessionId,signature_id,comm
     file_name = signature_name
     for char in bad_chars:
         file_name = file_name.replace(char,"")
-    file_path = SAVE_PATH + file_name + '.icc'
+    file_path = icylib.ICC_PATH + file_name + '.icc'
 
     add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name)
 
@@ -118,7 +114,7 @@ def write_signature_to_file(signature_name,signature_sessionId,signature_id,comm
 
 def import_signature(signature_search):
     global conf
-    conf = icylib.read_conf_file(SERVER_CONF_PATH)
+    conf = icylib.read_conf_file()
 
     print("server: " + conf.machine_ip + "\n")
 

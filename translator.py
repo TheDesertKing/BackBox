@@ -16,8 +16,6 @@ import json
 import sys
 import os
 
-SAVE_PATH = "./icy/"
-
 CTYPES_NOTATION = {"internal": "I", "remote": "R", "local": "L"}
 DEFAULT_TIMEOUT = {"internal": 0, "remote": 60, "local": 30}
 DEFAULT_WAITFOR = {
@@ -184,7 +182,7 @@ def write_ic_file(signature_name,blocks):
     #remove '.icc' ending
     filename = signature_name[:-4] if signature_name.endswith('.icc') else signature_name
 
-    file_path = SAVE_PATH + os.path.basename(filename) + '.icy'
+    file_path = icylib.ICY_PATH + os.path.basename(filename) + '.icy'
     with open(file_path, 'wt') as ic_file:
         ic_file.write(content)
 

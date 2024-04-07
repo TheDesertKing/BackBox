@@ -10,9 +10,6 @@ from urllib3.exceptions import InsecureRequestWarning
 # Suppress the warnings from urllib3
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-MAP_FILE_PATH = "./signature_data.map"
-SERVER_CONF_PATH="./conf/69.json"
-
 DEFAULT_SIGNATURE_DATA = {
     "id": 0,
     "description": "",
@@ -31,7 +28,7 @@ DEFAULT_SIGNATURE_DATA = {
 
 
 def get_signature_map_data(icc_file_name):
-    with open(MAP_FILE_PATH, 'r') as map_file:
+    with open(icylib.MAP_FILE_PATH, 'r') as map_file:
         map_file_lines = map_file.readlines()
 
     for line in map_file_lines:
@@ -96,7 +93,7 @@ def get_signature_data(icc_file_path,icc_file_name,sess):
 
 
 def add_data_to_map_file(signature_name,icc_file_name,machine_ip,sessionId,signature_id):
-    with open(MAP_FILE_PATH, 'a') as map_file:
+    with open(icylib.MAP_FILE_PATH, 'a') as map_file:
         new_data_mapping = signature_name + ' | ' + icc_file_name + ' | ' + machine_ip + ' | ' + str(sessionId) + ' | '+ str(signature_id) + '\n'
         map_file.write(new_data_mapping)
 
@@ -142,7 +139,7 @@ def upload_signature_data(signature_data,icc_file_name,sess):
 def upload_signature_to_server(icc_file_path):
 
     global conf
-    conf = icylib.read_conf_file(SERVER_CONF_PATH)
+    conf = icylib.read_conf_file()
     sess = icylib.backbox_login(conf)
 
     icc_file_name = parse_signature_name(icc_file_path)

@@ -5,7 +5,6 @@ import re
 import os
 import icylib
 
-COMPILED_PATH = "./compiled/"
 
 CTYPES_NOTATION = {"I":"internal", "R": "remote", "L": "local"}
 DEFAULT_TIMEOUT = {"internal": 0, "remote": 60, "local": 30}
@@ -295,7 +294,7 @@ def save_commands_json(filepath,commands_json_list):
     if filename.endswith('.icy') or filename.endswith('.icc'):
         filename = filename[:-4]
 
-    icc_file_path = COMPILED_PATH + filename + '.icc'
+    icc_file_path = icylib.COMPILED_PATH + filename + '.icc'
     with open(icc_file_path, 'wt') as icc_file:
         #icc_file.write(commands_json_list)
         json.dump(commands_json_list,icc_file)
@@ -311,6 +310,7 @@ def compile_icy_to_icc(file_path):
     commands_json_list = parse_command_blocks(command_blocks)
     icylib.write_to_file('piled',json.dumps(commands_json_list,indent=2))
     #print(json.dumps(commands_json_list,indent=2))
+    #exit(123)
     icc_file_path = save_commands_json(file_path,commands_json_list)
 
     return icc_file_path
