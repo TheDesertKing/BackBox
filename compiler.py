@@ -217,7 +217,9 @@ def parse_command_line(command_line):
 
 
 def parse_desc(desc_line):
-    return {'description': desc_line[2:]}
+    if desc_line[1] == ' ':
+        return {'description': desc_line[2:]}
+    return {'description': desc_line[1:]}
 
 
 def parse_waitfor(line):

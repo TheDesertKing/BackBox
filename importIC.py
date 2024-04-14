@@ -43,7 +43,6 @@ def get_signature_data(signature_search,matching_signatures):
 
     else:
         signature_names = sorted([sig["name"] for sig in matching_signatures])
-        print(signature_names)
         index = 1
         for name in signature_names:
             print(f"[{index}] {name}")
