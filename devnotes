@@ -1,4 +1,4 @@
-* fix the @j bug where it jumps 1 command lower than number due to first char being L/R/I and not counting in search
+* add jumping variables, local to icy, allowing for dynamic jumps
 
 * add multiline condition support for translator and compiler
 
