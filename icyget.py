@@ -14,10 +14,15 @@ def validate_argv(argv):
 def main():
     validate_argv(sys.argv)
 
-    signature_file_path = import_signature(sys.argv[1:])['sig_file_path']
-    file_path = convert_icc_to_icy(signature_file_path)
+    signature_file_path_list = import_signature(sys.argv[1:])['sig_file_path_list']
 
-    call(['vim',file_path])
+    icy_file_path_list = []
+    for signature_file_path in signature_file_path_list:
+        icy_file_path_list.append(convert_icc_to_icy(signature_file_path))
+
+
+    if len(icy_file_path_list) == 1:
+        call(['vim',icy_file_path_list[0]])
 
 
 main()

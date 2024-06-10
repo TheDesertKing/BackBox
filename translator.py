@@ -187,7 +187,7 @@ def write_ic_file(signature_name,blocks):
     with open(file_path, 'wt') as ic_file:
         ic_file.write(content)
 
-    print(file_path + ' succesfully translated')
+    print(f"successfully translated:\t{file_path}\n")
 
     return file_path
 

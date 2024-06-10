@@ -310,7 +310,7 @@ def compile_icy_to_icc(file_path):
     command_blocks = get_command_blocks(file_path)
 
     commands_json_list = parse_command_blocks(command_blocks)
-    icylib.write_to_file('piled',json.dumps(commands_json_list,indent=2))
+    #icylib.write_to_file('piled',json.dumps(commands_json_list,indent=2))
     #print(json.dumps(commands_json_list,indent=2))
     #exit(123)
     icc_file_path = save_commands_json(file_path,commands_json_list)

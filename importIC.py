@@ -48,10 +48,13 @@ def get_signature_data(signature_search,matching_signatures):
             print(f"[{index}] {name}")
             index += 1
 
-        print(f"please pick signature using it's index (1-{index-1})")
+        print(f"please pick signature using it's index (1-{index-1} or 'a' for all)")
 
         while True:
             picked_index = input()
+
+            if picked_index.strip() == 'a':
+                return matching_signatures
 
             try:
                 picked_index = int(picked_index)
@@ -64,7 +67,7 @@ def get_signature_data(signature_search,matching_signatures):
                 print("index picked is out of range, try again")
 
             else:
-                return [sig for sig in matching_signatures if sig["name"] == signature_names[picked_index-1]][0]
+                return [sig for sig in matching_signatures if sig["name"] == signature_names[picked_index-1]]
 
 
 def request_signature_commands(session_id,sess):
@@ -73,11 +76,11 @@ def request_signature_commands(session_id,sess):
     return sess.get(conf.machine_url + f"rest/data/integrator/session/commands/{session_id}",headers={"Accept":"application/json"}).text
 
 
-def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name):
+def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name,verification):
     with open(icylib.MAP_FILE_PATH, 'r+') as map_file:
         map_data = map_file.readlines()
         is_new_sig = True
-        if signature_name in [sig_data.split(' | ')[0] for sig_data in map_data]:
+        if signature_name in [sig_data.split(' | ')[0] for sig_data in map_data] and verification:
             print('Notice: signature with matching name was imported in the past, do you want to continue? ')
             inp = ''
             while inp not in ['y','n']:
@@ -95,7 +98,7 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
             map_file.write(new_data_mapping)
 
 
-def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands):
+def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands,verification):
     # remove characters that cause issues in file names
     bad_chars = ['>',':','/','*','\\','<',':','|','?']
     file_name = signature_name
@@ -103,11 +106,11 @@ def write_signature_to_file(signature_name,signature_sessionId,signature_id,comm
         file_name = file_name.replace(char,"")
     file_path = icylib.ICC_PATH + file_name + '.icc'
 
-    add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name)
+    add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name,verification)
 
     icylib.write_to_file(file_path, commands)
 
-    print(file_path + ' was saved successfully')
+    print(f"saved successfully:\t{file_path}\n")
     return file_path
 
 
@@ -123,18 +126,25 @@ def import_signature(signature_search):
 
     matching_signatures = get_matching_signatures(signature_search,all_signatures)
 
-    signature_data = get_signature_data(signature_search,matching_signatures)
+    signature_data_list = get_signature_data(signature_search,matching_signatures)
     #ic(signature_data)
 
-    signature_commands = request_signature_commands(signature_data['sessionId'],sess)
-    #ic(signature_commands)
+    verification = len(signature_data_list) == 1
+    # should we prompt the user if to download the signature if it was already downloaded in the past
+    # if we do batch icyget, disable verification
+    signature_file_path_list = []
+    for signature_data in signature_data_list:
+        signature_commands = request_signature_commands(signature_data['sessionId'],sess)
+        #ic(signature_commands)
 
-    # THIS IS FOR TESTING WAITFOR ON compiler.py 
-    #write_to_file('waitfor',signature_commands)
+        # THIS IS FOR TESTING WAITFOR ON compiler.py 
+        #write_to_file('waitfor',signature_commands)
 
-    signature_file_path = write_signature_to_file(signature_data["name"],signature_data['sessionId'],signature_data['id'],signature_commands)
+        signature_file_path_list.append(write_signature_to_file(signature_data["name"],signature_data['sessionId'],signature_data['id'],signature_commands,verification))
 
-    return {'sig_file_path': signature_file_path}
+
+
+    return {'sig_file_path_list': signature_file_path_list}
 
 
 def main():
