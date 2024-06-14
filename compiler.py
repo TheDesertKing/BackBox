@@ -168,8 +168,10 @@ def parse_saveto(saveto):
             print('improper File Permissions (not numeric)')
             exit(51)
 
-    if 'V' in first_part:
+    if 'V' in first_part[0]:
         saveto_data['output_TYPE'] = 'variable'
+    elif 'performance' in first_part:
+        saveto_data['output_TYPE'] = 'performance'
     else:
         saveto_data['output_TYPE'] = 'file'
 
