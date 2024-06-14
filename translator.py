@@ -17,6 +17,7 @@ import sys
 import os
 import icylib
 
+
 CTYPES_NOTATION = {"internal": "I", "remote": "R", "local": "L"}
 DEFAULT_TIMEOUT = {"internal": 0, "remote": 60, "local": 30}
 DEFAULT_WAITFOR = {
@@ -94,8 +95,10 @@ def save_notation(p, is_save, save_type, is_append, save_to, file_perm):
         save_part = ">" + " " + save_to
     elif save_type == "file" and is_append:
         save_part = ">>" + " " + save_to
+    elif save_type == "performance":
+        save_part = "performance>" + " " + save_to
     else:
-        raise Exception("save_notation: Can't identify save_type")
+        raise Exception(f"save_notation: Can't identify save_type:\n{save_type}")
 
     if file_perm != 664:
         p.append(str(file_perm) + save_part)

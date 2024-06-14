@@ -39,7 +39,7 @@ def get_signature_data(signature_search,matching_signatures):
         exit(44)
 
     elif len(matching_signatures) == 1:
-        return matching_signatures[0]
+        return matching_signatures
 
     else:
         signature_names = sorted([sig["name"] for sig in matching_signatures])
@@ -77,10 +77,10 @@ def request_signature_commands(session_id,sess):
 
 
 def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name,verification):
-    with open(icylib.MAP_FILE_PATH, 'r+') as map_file:
-        map_data = map_file.readlines()
+    with open(icylib.MAP_FILE_PATH, 'w+') as map_file:
+        map_file_data = map_file.readlines()
         is_new_sig = True
-        if signature_name in [sig_data.split(' | ')[0] for sig_data in map_data] and verification:
+        if signature_name in [sig_data.split(' | ')[0] for sig_data in map_file_data] and verification:
             print('Notice: signature with matching name was imported in the past, do you want to continue? ')
             inp = ''
             while inp not in ['y','n']:
@@ -93,9 +93,23 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
             else:
                 is_new_sig = False
 
+        new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id) + '\n'
+        # add new signature map data
         if is_new_sig:
-            new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id) + '\n'
-            map_file.write(new_data_mapping)
+            map_file_data.append(new_data_mapping)
+            map_file.writelines(map_file_data)
+
+        # modify signature map data
+        else:
+            try:
+                signature_map_line_index = [line_index for line_index, sig_data in enumerate(map_file_data) if signature_name == sig_data.split(' | ')[0]][0]
+            except Exception:
+                # should never return Exception, as this will only be reached after finding signature name in map file
+                print(f"Logical error: Signature name found in map file, yet when trying to modify it, the same signature name was not found in the map file.\nSignature name: {signature_name}")
+                exit(49)
+
+            map_file_data[signature_map_line_index] = new_data_mapping
+            map_file.writelines(new_data_mapping)
 
 
 def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands,verification):
