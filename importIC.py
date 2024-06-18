@@ -77,7 +77,7 @@ def request_signature_commands(session_id,sess):
 
 
 def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name,verification):
-    with open(icylib.MAP_FILE_PATH, 'w+') as map_file:
+    with open(icylib.MAP_FILE_PATH, 'r+') as map_file:
         map_file_data = map_file.readlines()
         is_new_sig = True
         if signature_name in [sig_data.split(' | ')[0] for sig_data in map_file_data] and verification:
@@ -109,7 +109,7 @@ def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_na
                 exit(49)
 
             map_file_data[signature_map_line_index] = new_data_mapping
-            map_file.writelines(new_data_mapping)
+            map_file.writelines(map_file_data)
 
 
 def write_signature_to_file(signature_name,signature_sessionId,signature_id,commands,verification):
@@ -170,4 +170,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
