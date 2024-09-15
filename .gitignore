@@ -3,3 +3,5 @@ icy
 icc
 signature_data.map
 __pycache__
+extra/icydir_backup*
+extra/tmp
