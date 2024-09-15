@@ -2,7 +2,7 @@ import json
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 
-CONF_FILE_PATH = './conf/69.json'
+CONF_FILE_PATH = './conf/88.json'
 ICY_PATH = "./icy/"
 ICC_PATH = "./icc/"
 COMPILED_PATH = "./compiled/"

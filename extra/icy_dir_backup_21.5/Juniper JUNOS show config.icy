@@ -1,7 +1,0 @@
-L cd %%DBL%%
-
-I connect
-
-I getlastline V> %%CURRENT_PROMPT%%
-
-L show configuration | display set | display inheritance | except ##

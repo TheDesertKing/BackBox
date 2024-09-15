@@ -77,40 +77,37 @@ def request_signature_commands(session_id,sess):
 
 
 def add_data_to_map_file(signature_name,signature_sessionId,signature_id,file_name,verification):
-    with open(icylib.MAP_FILE_PATH, 'r') as map_file:
+    with open(icylib.MAP_FILE_PATH, 'r+') as map_file:
         map_file_data = map_file.readlines()
+        is_new_sig = True
+        if signature_name in [sig_data.split(' | ')[0] for sig_data in map_file_data] and verification:
+            print('Notice: signature with matching name was imported in the past, do you want to continue? ')
+            inp = ''
+            while inp not in ['y','n']:
+                inp = input('[y/n]: ').lower()
 
-    is_new_sig = True
-    if signature_name in [sig_data.split(' | ')[0] for sig_data in map_file_data] and verification:
-        print('Notice: signature with matching name was imported in the past, do you want to continue? ')
-        inp = ''
-        while inp not in ['y','n']:
-            inp = input('[y/n]: ').lower()
+            if inp == 'n':
+                print('Exiting')
+                exit(45)
 
-        if inp == 'n':
-            print('Exiting')
-            exit(45)
+            else:
+                is_new_sig = False
 
-        else:
-            print()
-            is_new_sig = False
-
-    new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id) + '\n'
-    # add new signature map data
-    if is_new_sig:
-        with open(icylib.MAP_FILE_PATH, 'a') as map_file:
-            map_file.writelines(new_data_mapping)
+        new_data_mapping = signature_name + ' | ' + file_name + ' | ' + conf.machine_ip + ' | ' + str(signature_sessionId) + ' | '+ str(signature_id) + '\n'
+        # add new signature map data
+        if is_new_sig:
+            map_file_data.append(new_data_mapping)
+            map_file.writelines(map_file_data)
 
         # modify signature map data
-    else:
-        try:
-            signature_map_line_index = [line_index for line_index, sig_data in enumerate(map_file_data) if signature_name == sig_data.split(' | ')[0]][0]
-        except Exception:
-            # should never return Exception, as this will only be reached after finding signature name in map file
-            print(f"Logical error: Signature name found in map file, yet when trying to modify it, the same signature name was not found in the map file.\nSignature name: {signature_name}")
-            exit(49)
+        else:
+            try:
+                signature_map_line_index = [line_index for line_index, sig_data in enumerate(map_file_data) if signature_name == sig_data.split(' | ')[0]][0]
+            except Exception:
+                # should never return Exception, as this will only be reached after finding signature name in map file
+                print(f"Logical error: Signature name found in map file, yet when trying to modify it, the same signature name was not found in the map file.\nSignature name: {signature_name}")
+                exit(49)
 
-        with open(icylib.MAP_FILE_PATH, 'w') as map_file:
             map_file_data[signature_map_line_index] = new_data_mapping
             map_file.writelines(map_file_data)
 
@@ -166,6 +163,7 @@ def import_signature(signature_search):
 
 def main():
     validate_argv(argv)
+
     import_signature(argv[1:])
 
 
