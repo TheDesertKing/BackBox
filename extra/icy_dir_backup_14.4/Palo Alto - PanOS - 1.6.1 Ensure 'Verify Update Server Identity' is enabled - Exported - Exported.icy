@@ -1,0 +1,17 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p'  tempkey > key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/system/server-verification&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "/response/result/server-verification" -n response V> %%RESULTS%% tout60
+
+L rm -rf key tempkey response tout60
+
+L if (%%RESULTS%% notcontains yes OR %%RESULTS%% isempty) echo CIS 1.6.1 'Verify Update Server Identity' is not  enabled : FAIL tout60 
+* F:CIS 1.6.1 'Verify Update Server Identity' is not  enabled : FAIL
+
+L if (%%RESULTS%% contains yes) echo CIS 1.6.1 'Verify Update Server Identity' is enabled : PASS tout60 
+* S:CIS 1.6.1 'Verify Update Server Identity' is enabled : PASS

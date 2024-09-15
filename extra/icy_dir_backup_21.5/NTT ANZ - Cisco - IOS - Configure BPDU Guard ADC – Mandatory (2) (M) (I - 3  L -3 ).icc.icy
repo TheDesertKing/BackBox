@@ -1,0 +1,25 @@
+I connect
+
+I getlastline 665V> %%CURRENT_PROMPT%%
+
+R if (%%CURRENT_PROMPT%% contains config) end
+
+R show run | sec %%INTERFACE%% > int-config.txt
+
+L cd %%DBL%%
+
+L cat int-config.txt | grep "spanning-tree portfast" V> %%PORTFAST%%
+
+L cat int-config.txt | grep "spanning-tree bpduguard enable" V> %%BPDU%%
+
+L if (%%PORTFAST%% isempty AND %%BPDU%% isempty) echo "FAIL: Interface %%INTERFACE%% is missing both portfast and bpdu guard configuration" > logs/results.log 
+* F:FAIL: Interface %%INTERFACE%% is missing both portfast and bpdu guard configuration
+
+L if (%%PORTFAST%% isempty AND %%BPDU%% isnotempty) echo "FAIL: Interface %%INTERFACE%% is missing portfast configuration" > logs/results.log 
+* F:FAIL: Interface %%INTERFACE%% is missing portfast configuration
+
+L if (%%PORTFAST%% isnotempty AND %%BPDU%% isempty) echo "FAIL: Interface %%INTERFACE%% is missing bpdu guard configuration" > logs/results.log 
+* F:FAIL: Interface %%INTERFACE%% is missing bpdu guard configuration
+
+L if (%%PORTFAST%% isnotempty OR %%BPDU%% isnotempty) echo "PASS: Interface %%INTERFACE%% is configured with both portfast and bpdu guard" > logs/results.log 
+* S:PASS: Interface %%INTERFACE%% is configured with both portfast and bpdu guard

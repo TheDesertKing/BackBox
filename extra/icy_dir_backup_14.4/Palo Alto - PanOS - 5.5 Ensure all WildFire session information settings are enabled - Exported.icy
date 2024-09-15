@@ -1,0 +1,37 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/setting/wildfire/session-info-select&key=`cat key`"  | tee  response tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-email-subject"  -n  response V> %%EMAILSUBJECT%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-email-sender"  -n  response V> %%EMAILSENDER%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-filename"  -n  response V> %%EXCLUDEFILE%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-url"  -n  response V> %%EXCLUDEURL%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-username"  -n  response V> %%EXCLUDEUSER%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-app-name"  -n  response V> %%EXCLUDEAPP%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-vsys-id "  -n  response V> %%EXCLUDEVYS%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-dest-port"  -n  response V> %%EXCLUDEDEST%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-src-port"  -n  response V> %%EXCLUDESRC%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-dest-ip"  -n  response V> %%EXCLUDEDEST%% tout60
+
+L xmlstarlet sel -t -v "/response/result/session-info-select/exclude-src-ip"  -n  response V> %%EXCLUDERIP%% tout60
+
+L rm -rf key tempkey tout60
+
+L if (%%EMAILSUBJECT%% contains yes OR %%EMAILSENDER%% contains yes OR %%EXCLUDEFILE%% contains yes OR %%EXCLUDEURL%% contains yes OR %%EXCLUDEUSER%% contains yes OR %%EXCLUDEAPP%% contains yes OR %%EXCLUDEVYS%% contains yes OR %%EXCLUDEDEST%% contains yes OR %%EXCLUDESRC%% contains yes OR %%EXCLUDEDEST%% contains yes OR %%EXCLUDERIP%% contains yes) echo CIS 5.5 all WildFire session information settings are not enabled  : FAIL tout60 
+* F:CIS 5.5 all WildFire session information settings are not enabled  : FAIL
+
+L if (%%EMAILSUBJECT%% isempty OR %%EMAILSENDER%% isempty OR %%EXCLUDEFILE%% isempty OR %%EXCLUDEURL%% isempty OR %%EXCLUDEUSER%% isempty OR %%EXCLUDEAPP%% isempty OR %%EXCLUDEVYS%% isempty OR %%EXCLUDEDEST%% isempty OR %%EXCLUDESRC%% isempty OR %%EXCLUDEDEST%% isempty OR %%EXCLUDERIP%% isempty) echo CIS 5.5 all WildFire session information settings are enabled : PASS tout60 
+* S:CIS 5.5 all WildFire session information settings are enabled : PASS

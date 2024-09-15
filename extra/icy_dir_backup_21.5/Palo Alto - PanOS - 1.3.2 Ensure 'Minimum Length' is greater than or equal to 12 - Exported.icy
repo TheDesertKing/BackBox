@@ -1,0 +1,24 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# Request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/mgt-config/password-complexity&key=`cat key`" | tee response tout60 
+# Response API
+
+L xmlstarlet sel -t -v "//password-complexity/minimum-length" -n response V> %%MIN_LENGTH%% 
+
+L if (%%MIN_LENGTH%% isempty) echo "0" V> %%MIN_LENGTH%%
+#Default is 0
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf
+#Cleanup
+
+L if (%%MIN_LENGTH%% less 12) echo "Minimum Password Length is not set to 12 or above. Current setting: %%MIN_LENGTH%%"
+* F:Minimum Password Length is not set to 12 or above. Current setting: %%MIN_LENGTH%%
+
+L if (%%MIN_LENGTH%% greater 11) echo "Minimum Password Length is set to 12 or above. Current setting: %%MIN_LENGTH%%"
+* S:Minimum Password Length is set to 12 or above. Current setting: %%MIN_LENGTH%%

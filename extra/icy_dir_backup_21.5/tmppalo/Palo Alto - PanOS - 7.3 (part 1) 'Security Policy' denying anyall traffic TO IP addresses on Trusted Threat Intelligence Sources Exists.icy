@@ -1,0 +1,57 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/rulebase/security/rules&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']" -n response V> %%POLICIY%%
+
+L if (%%POLICIY%% isempty) echo "Security Policy %%DYN_SEC_POLICY%% was not found" 
+* F:Security Policy %%DYN_SEC_POLICY%% was not found
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/from/member" -n response V> %%SRC_ZONE%%
+
+L if (%%SRC_ZONE%% notequal any) echo "Source zone is not set to any, should be set to any" 
+* F:Source zone is not set to any, should be set to any
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/to/member" -n response V> %%DST_ZONE%%
+
+L if (%%DST_ZONE%% notequal any) echo "Destination zone is not set to any, should be set to any" 
+* F:Destination zone is not set to any, should be set to any
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/source/member" -n response V> %%SRC_ADDRESS%%
+
+L if (%%DYN_DIRECTION%% contains from AND %%SRC_ADDRESS%% notequal panw-known-ip-list) echo "Destination address is not set to panw-known-ip-list, should be set to panw-known-ip-list" 
+* F:Destination address is not set to panw-known-ip-list, should be set to panw-known-ip-list
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/destination/member" -n response V> %%DST_ADDRESS%%
+
+L if (%%DYN_DIRECTION%% contains to AND %%DST_ADDRESS%% notequal panw-known-ip-list) echo "Destination address is not set to panw-known-ip-list, should be set to panw-known-ip-list" 
+* F:Destination address is not set to panw-known-ip-list, should be set to panw-known-ip-list
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/application/member" -n response V> %%APPLICATION%%
+
+L if (%%APPLICATION%% notequal any) echo "Application is not set to any, should be set to any" 
+* F:Application is not set to any, should be set to any
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/service/member" -n response V> %%SERVICE%%
+
+L if (%%SERVICE%% notequal any) echo "Service is not set to any, should be set to any" 
+* F:Service is not set to any, should be set to any
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/action" -n response V> %%ACTION%%
+
+L if (%%ACTION%% notequal deny) echo "Action is not set to deny, should be set to deny" 
+* F:Action is not set to deny, should be set to deny
+
+L xmlstarlet sel -t -c "//entry[@name='%%DYN_SEC_POLICY%%']/profile-setting" -n response V> %%PROFILE%%
+
+L if (%%PROFILE%% contains <) echo "Profile setting is not set to none, should be set to none" 
+* F:Profile setting is not set to none, should be set to none
+
+L rm -rf key tempkey response
+
+L if (%%SRC_ZONE%% equal any AND %%DST_ZONE%% equal any AND %%DST_ADDRESS%% equal panw-known-ip-list AND %%APPLICATION%% equal any AND %%SERVICE%% equal any AND %%ACTION%% equal deny AND %%PROFILE%% notcontains <) echo "CIS 7.3 (part 1) 'Security Policy' denying any/all traffic TO IP addresses on Trusted Threat Intelligence Sources Exists : PASS" 
+* S:CIS 7.3 (part 1) 'Security Policy' denying any/all traffic TO IP addresses on Trusted Threat Intelligence Sources Exists : PASS

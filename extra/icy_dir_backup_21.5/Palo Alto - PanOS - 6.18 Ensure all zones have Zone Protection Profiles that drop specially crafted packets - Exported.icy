@@ -1,0 +1,39 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key
+
+L curl -k "https://%%HOST%%/api/?type=op&cmd=<show><config><effective-running><xpath>devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys</xpath></effective-running></config></show>&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -m "//zone-protection-profile/entry" -v "@name" -n response > zones
+
+L cat zones | wc -l V> %%COUNTER%%
+
+L cat zones | head -1; sed -i-i  '1d' zones V> %%ZONE%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%ZONE%%']/discard-ip-spoof" -n response V> %%IP_SPOOF%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%ZONE%%']/discard-overlapping-tcp-segment-mismatch" -n response V> %%MISMATCH_TCP%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%ZONE%%']/discard-strict-source-routing" -n response V> %%STRICT_SRC%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%ZONE%%']/discard-loose-source-routing" -n response V> %%LOOSE_SRC%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%ZONE%%']/discard-malformed-option" -n response V> %%MALFORMED%%
+
+L if (%%IP_SPOOF%% notcontains yes OR %%MISMATCH_TCP%% notcontains yes OR %%STRICT_SRC%% notcontains yes OR %%LOOSE_SRC%% notcontains yes OR %%MALFORMED%% notcontains yes) echo "%%ZONE%%" >> bad_zone_profiles
+
+L echo $((%%COUNTER%% - 1)) V> %%COUNTER%%
+
+I if (%%COUNTER%% greater 0) gotoline 7 100
+
+L cat bad_zone_profiles V> %%BAD_PROF%%
+
+L rm -rf key tempkey response
+
+L if (%%BAD_PROF%% isnotempty AND %%BAD_PROF%% notcontains such file) echo "Zones not matching criteria found: %%BAD_PROF%%" 
+* F:Zones not matching criteria found: %%BAD_PROF%%
+
+L if (%%BAD_PROF%% isempty OR %%BAD_PROF%% contains such file) echo CIS 6.18 All zones have Zone Protection Profiles that drop specially crafted packets : PASS 
+* S:CIS 6.18 All zones have Zone Protection Profiles that drop specially crafted packets : PASS

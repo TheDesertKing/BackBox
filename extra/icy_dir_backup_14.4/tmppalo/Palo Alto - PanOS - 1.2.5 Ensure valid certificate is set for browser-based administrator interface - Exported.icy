@@ -1,0 +1,54 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/system/ssl-tls-service-profile&key=`cat key`" | tee response tout60 
+
+L xmlstarlet sel -t -v "//ssl-tls-service-profile" -n response V> %%CERT-PROF%% 
+# %%CERT-PROF%%
+
+I url_encode %%CERT-PROF%% V> %%CERT-PROF%%
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/shared/ssl-tls-service-profile/entry%5B%40name%3D%27%%CERT-PROF%%%27%5D&key=`cat key`" | tee profile tout60
+# profile
+
+L xmlstarlet sel -t -v "//certificate" -n profile V> %%CERT-NAME%% 
+# %%CERT-NAME%%
+
+I url_encode %%CERT-NAME%% V> %%CERT-NAME%%
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/shared/certificate/entry%5B%40name%3D%27%%CERT-NAME%%%27%5D&key=`cat key`" | tee certificate tout60
+# certificate
+
+L date +'%Y%m%d' V> %%DATE%% 
+# %%CURRENT_DATE%%
+
+L xmlstarlet sel -t -v "//not-valid-after" -n certificate | awk '{print $2 $1 $4}' V> %%TO-DATE%% 
+# %%TO_DATE%%
+
+L date +'%Y%m%d' -d "%%TO_DATE%%" V> %%FORMATTED_TO_DATE%% 
+# %%FORMATTED_TO_DATE%%
+
+L if (%%FORMATTED_TO_DATE%% less %%CURRENT_DATE%%) echo ""
+
+L xmlstarlet sel -t -v "//not-valid-before" -n certificate | awk '{print $2 $1 $4}' V> %%FROM-DATE%% 
+# %%FROM-DATE%%
+
+L date +'%Y%m%d' -d "%%FROM-DATE%%" | echo 1 V> %%FROM-DATE%% 
+# %%FROM-DATE%%
+
+L xmlstarlet sel -t -v "//issuer" -n certificate | awk -F'O[[:space:]]*=[[:space:]]*' '{print $2}' | cut -d',' -f1 V> %%ISSUER-NAME%% 
+# %%ISSUER-NAME%%
+
+L xmlstarlet sel -t -v "//algorithm" -n certificate V> %%ENCRYPTION-CIPHER%% 
+# %%ENCRYPTION-CIPHER%%
+
+L cd %%DBL%%; ls | grep -v logs | xargs rm -rf
+
+L if (%%TO-DATE%% less %%DATE%% OR %%FROM-DATE%% greater %%DATE%% OR %%ENCRYPTION-CIPHER%% notcontains %%DYN_ENCRYPTION%% OR %%DATE%% isempty OR %%ISSUER-NAME%% notcontains %%DYN_ISSUER%% OR %%TO-DATE%% isempty OR %%FROM-DATE%% isempty OR %%ENCRYPTION-CIPHER%% isempty OR %%CERT-PROF%% isempty OR %%CERT-NAME%% isempty) echo CIS 1.2.5 Valid certificate is NOT set for browser-based administrator interface : FAIL 
+* F:CIS 1.2.5 Valid certificate is NOT set for browser-based administrator interface : FAIL
+
+L if (%%TO-DATE%% greater %%DATE%% AND %%FROM-DATE%% less %%DATE%% AND %%ENCRYPTION-CIPHER%% contains %%DYN_ENCRYPTION%% AND %%ISSUER-NAME%% contains %%DYN_ISSUER%%) echo CIS 1.2.5 Valid certificate is set for browser-based administrator interface : PASS 
+* S:CIS 1.2.5 Valid certificate is set for browser-based administrator interface : PASS

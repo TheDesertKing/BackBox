@@ -1,0 +1,41 @@
+L cd %%DBL%%
+
+L echo | openssl s_client -showcerts -connect %%HOST%%:%%DYN_PORT%% 2>/dev/null | openssl x509 -inform pem -noout -text > certificate
+
+L cat certificate | grep "Subject:" | grep "CN\s*=\s*" | awk -F'CN[[:space:]]*=[[:space:]]*' '{print $2}' V> %%CN%%
+
+L cat certificate | grep "Issuer:" | awk -F'O[[:space:]]*=[[:space:]]*' '{print $2}' | cut -d',' -f1 V> %%ISSUER%%
+
+L cat certificate | grep "Not Before\s*:" | awk -F':[[:space:]]' '{print $2}' V> %%NOT_BEFORE_DATE%%
+
+L cat certificate | grep "Not After\s*:" | awk -F':[[:space:]]' '{print $2}' V> %%NOT_AFTER_DATE%%
+
+L echo $(($(date '+%s')-$(date -d "%%NOT_BEFORE_DATE%%" '+%s'))) V> %%NOT_BEFORE_VALID%%
+
+L echo $(($(date -d "%%NOT_AFTER_DATE%%" '+%s')-$(date '+%s'))) V> %%NOT_AFTER_VALID%%
+
+L echo $(($(date -d "%%NOT_AFTER_DATE%%" '+%s')-$(date -d '+%%WARNING%% days' '+%s'))) V> %%NOT_AFTER_VALID%%
+
+L if (%%CN%% isempty) echo "Missing CN" 
+* F:Missing CN
+
+L if (%%DYN_CN%% isnotempty AND %%CN%% notcontains %%DYN_CN%%) echo "CN %%CN%% does not match %%DYN_CN%% as specified in dynamic field" 
+* F:CN %%CN%% does not match %%DYN_CN%% as specified in dynamic field
+
+L if (%%ISSUER%% isempty) echo "Missing Issuer" 
+* F:Missing Issuer
+
+L if (%%DYN_ISSUER%% isnotempty AND %%ISSUER%% notcontains %%DYN_ISSUER%%) echo "Issuer %%ISSUER%% does not match %%DYN_ISSUER%% as specified in the dynamic field" 
+* F:Issuer %%ISSUER%% does not match %%DYN_ISSUER%% as specified in the dynamic field
+
+L if (%%NOT_BEFORE_VALID%% less 0) echo "Certificate not yet valid, Not Before is in the future" 
+* F:Certificate not yet valid, Not Before is in the future
+
+L if (%%NOT_AFTER_VALID%% less 0) echo "Certificate expired, Not After is in the past" 
+* F:Certificate expired, Not After is in the past
+
+L if (%%TIME_TILL_WARNING%% less 0) echo "Certificate will expire in less than %%WARNING%% days" 
+* SUS:Certificate will expire in less than %%WARNING%% days
+
+L if (%%CN%% isnotempty OR %%ISSUER%% isnotempty OR %%NOT_BEFORE_VALID%% greater 0 OR %%NOT_AFTER_VALID%% greater 0) echo "Certificate is valid" 
+* S:Certificate is valid

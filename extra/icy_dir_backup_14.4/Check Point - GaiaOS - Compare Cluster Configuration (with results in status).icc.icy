@@ -1,0 +1,51 @@
+I add_firewall_rule %%CUSTOM_2%% 
+# Allow connection to the second member
+
+I connect 
+# Connect to the first member
+
+R cphaprob stat | grep -i local | grep -i "active" V> %%STATUS%% 
+# The InteliCheck will only be performed on the active member 
+& #:S >:S %%CURRENT_PROMPT%%:S
+
+R if (%%STATUS%% isempty) echo "This test will only run on the active member Exiting,.." 
+# The InteliCheck will only be performed on the active member 
+& #:S >:S %%CURRENT_PROMPT%%:S 
+* S:This test will only run on the active member Exiting,..
+
+R clish -c "show configuration" | sort | grep -vP "Configuration of|Exported by|password-hash|set hostname|ipv4-address|comment|add snmp usm user corpnsm security-level%%EXCLUDE%%" > MemberA.txt 
+& :0]#:S
+
+I disconnect 
+# Disconnect from the first device in order to collect configuration from the second device
+
+I connect %%CUSTOM_2%% 
+# Connect to second member
+
+R clish -c "show configuration" | sort | grep -vP "Configuration of|Exported by|password-hash|set hostname|ipv4-address|comment|add snmp usm user corpnsm security-level%%EXCLUDE%%" > MemberB.txt tout30 
+# Second member 
+& :0]#:S
+
+L cd %%DEFAULT_BACKUP_LOCATION%%
+
+L grep -vFxf MemberA.txt MemberB.txt | wc -l V> %%DIFF1%% 
+# Check if the files are identical
+
+L grep -vFxf MemberB.txt MemberA.txt | wc -l V> %%DIFF2%% 
+# Check if the files are identical
+
+L echo -e "Found on %%CUSTOM_2%% and not on %%DEVICE_NAME%%\n##########"  ; grep -vFxf MemberA.txt MemberB.txt > logs/results.log 
+# Check if the files are identical
+
+L echo -e "Found on %%DEVICE_NAME%% and not on its cluster member %%CUSTOM_2%%\n##########" ; grep -vFxf MemberB.txt MemberA.txt >> logs/results.log 
+# Check if the files are identical
+
+L cat logs/results.log V> %%RESULTS%%
+
+L if (%%DIFF1%% greater 0or%%DIFF2%% greater 0) echo -e "Differences found:\n\n%%RESULTS%%" 
+# If the diff output is not empty, there are differences 
+* F:Differences found:%%ENTER%%%%RESULTS%%
+
+L if (%%DIFF1%% equal 0and%%DIFF1%% equal 0) echo "Files are identical" 
+# If the diff output is empty, there is no difference 
+* S:Files are identical

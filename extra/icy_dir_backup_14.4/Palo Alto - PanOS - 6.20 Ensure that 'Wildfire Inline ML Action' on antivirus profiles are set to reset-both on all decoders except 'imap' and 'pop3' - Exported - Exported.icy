@@ -1,0 +1,36 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/profiles/virus&key=`cat key`"  | tee  response tout60
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='smtp']/mlav-action" -n  response V> %%SMTPN%% tout60 
+# %%SMTPN%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='smb']/mlav-action" -n  response V> %%SMBN%% tout60 
+# %%SMBN%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='pop3']/mlav-action" -n  response V> %%POPN3%% tout60 
+# %%POPN3%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='imap']/mlav-action" -n  response V> %%IMAPN%% tout60 
+# %%IMAPN%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='http2']/mlav-action" -n  response V> %%HTTPN2% tout60 
+# %%HTTPN2%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='http']/mlav-action" -n  response V> %%HTTPN%% tout60 
+# %%HTTPN%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='ftp']/mlav-action" -n  response V> %%FTPN%% tout60 
+# %%FTPN%%
+
+L rm -rf key tempkey tout60
+
+L if (%%SMTPN%% isempty OR %%SMTPN%% notcontains reset-both OR %%FTPN%% isempty OR %%FTPN%% notcontains reset-both OR %%HTTPN%% isempty OR %%HTTPN%% notcontains reset-both OR %%HTTPN2%% isempty OR %%HTTPN2%% notcontains reset-both OR %%IMAPN%% isempty OR %%IMAPN%% notcontains alert OR %%POPN3%% isempty OR %%POPN3%% notcontains alert OR %%SMBN%% isempty OR %%SMBN%% notcontains reset-both) echo CIS 6.20 Wildfire Inline ML Action on antivirus profiles are NOT SET to reset-both on all decoders except imap and pop3 : FAIL tout60 
+* F:CIS 6.20 Wildfire Inline ML Action' on antivirus profiles are NOT SET to reset-both on all decoders except imap and pop3 : FAIL
+
+L if (%%SMTPN%% contains reset-both AND %%IMAPN%% contains alert AND %%POPN3%% contains alert AND %%HTTPN%% contains reset-both AND %%HTTPN2%% contains reset-both AND %%FTPN%% contains reset-both AND %%SMBN%% contains reset-both) echo CIS  6.20 Wildfire Inline ML Action on antivirus profiles are SET to reset-both on all decoders except imap and pop3 :  PASS tout60 
+* S:CIS 6.20 Wildfire Inline ML Action on antivirus profiles are SET to reset-both on all decoders except imap and pop3 :  PASS

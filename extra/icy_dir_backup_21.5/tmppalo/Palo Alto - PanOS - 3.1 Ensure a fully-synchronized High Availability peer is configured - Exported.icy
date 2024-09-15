@@ -1,0 +1,56 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/high-availability&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//group/state-synchronization/enabled" -n response V> %%SYNC_ENABLED%% tout60
+
+L if (%%SYNC_ENABLED%% equal no) echo "Session Synchronization is not set"
+* F:Session Synchronization is not set
+
+L xmlstarlet sel -t -v "//group/state-synchronization/transport" -n response V> %%TRANSPORT%% tout60
+
+L if (%%DYN_TRANSPORT%% isnotempty AND %%DYN_TRANSPORT%% notequal %%TRANSPORT%%) echo "Transport is not %%DYN_TRANSPORT%%, rather %%TRANSPORT%% instead"
+* F:Transport is not %%DYN_TRANSPORT%%, rather %%TRANSPORT%% instead
+
+L xmlstarlet sel -t -v "//interface/ha2/port" -n response V> %%HA_PORT%% tout60
+
+L if (%%HA_PORT%% isempty) echo "HA Port is not set"
+* F:HA Port is not set
+
+L if (%%DYN_PORT%% isnotempty AND %%DYN_PORT%% notequal %%HA_PORT%%) echo "HA Port is not %%DYN_PORT%%, rather %%HA_PORT%% instead"
+* F:HA Port is not %%DYN_PORT%%, rather %%HA_PORT%% instead
+
+L xmlstarlet sel -t -v "//interface/ha2/ip-address" -n response V> %%HA_IP%% tout60
+
+L if (%%HA_IP%% isempty) echo "HA IP address is not set"
+* F:HA IP address is not set
+
+L if (%%DYN_IP%% isnotempty AND %%DYN_IP%% notequal %%HA_IP%%) echo "HA IP address is not %%DYN_IP%%, rather %%HA_IP%% instead"
+* F:HA IP address is not %%DYN_IP%%, rather %%HA_IP%% instead
+
+L xmlstarlet sel -t -v "//interface/ha2/netmask" -n response V> %%NETMASK%% tout60
+
+L if (%%NETMASK%% isempty) echo "HA Netmask is not set"
+* F:HA Netmask is not set
+
+L if (%%DYN_NETMASK%% isnotempty AND %%DYN_NETMASK%% notequal %%NETMASK%%) echo "HA Netmask is not %%DYN_NETMASK%%, rather %%NETMASK%% instead"
+* F:HA Netmask is not %%DYN_NETMASK%%, rather %%NETMASK%% instead
+
+L xmlstarlet sel -t -v "//interface/ha2/gateway" -n response V> %%GATEWAY%% tout60
+
+L if (%%GATEWAY%% isempty) echo "HA Gateway is not set"
+* F:HA Gateway is not set
+
+L if (%%DYN_GATEWAY%% isnotempty AND %%DYN_GATEWAY%% notequal %%GATEWAY%%) echo "HA Gateway is not %%DYN_GATEWAY%%, rather %%GATEWAY%% instead"
+* F:HA Gateway is not %%DYN_GATEWAY%%, rather %%GATEWAY%% instead
+
+L rm -rf key tempkey response tout60
+
+L if (%%HA_PORT%% isnotempty AND %%HA_IP%% isnotempty AND %%NETMASK%% isnotempty AND %%GATEWAY%% isnotempty) echo CIS 3.1 fully-synchronized High Availability peer is configured : PASS tout60 
+* S:CIS 3.1 fully-synchronized High Availability peer is configured : PASS

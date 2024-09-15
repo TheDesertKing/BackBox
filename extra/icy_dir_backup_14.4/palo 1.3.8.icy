@@ -1,0 +1,21 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# Request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p'  tempkey > key tout60 
+# Parse Key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/mgt-config/password-complexity&key=`cat key`" | tee response tout60 
+# Response API
+
+L xmlstarlet sel -t -v "/response/result/password-complexity/new-password-differs-by-characters" -n response V> %%RESULTS%% tout60 
+# %%RESULTS%%  : Expected result
+
+L rm -rf key tempkey tout60
+
+L if (%%RESULTS%% less 3) echo CIS 1.3.8 'New Password Differs By Characters' is not set to greater than or equal to 3 : FAIL tout60 
+* F:CIS 1.3.8 'New Password Differs By Characters' is not set to greater than or equal to 3 : FAIL
+
+L if (%%RESULTS%% greater 2) echo CIS 1.3.8 'New Password Differs By Characters' is set to greater than or equal to 3 : PASS tout60 
+* S:CIS 1.3.8 'New Password Differs By Characters' is set to greater than or equal to 3 : PASS

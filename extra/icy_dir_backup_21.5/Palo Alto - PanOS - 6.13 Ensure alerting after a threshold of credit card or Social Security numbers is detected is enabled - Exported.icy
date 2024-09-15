@@ -1,0 +1,19 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key tout60
+
+L curl -k "https://%%HOST%%/api/?type=op&cmd=<show><config><effective-running><xpath>devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys</xpath></effective-running></config></show>&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//data-filtering//entry[@name='%%PROFILE%%']//alert-threshold "  -n  response V> %%ALERTTHRESHOLD%% tout60
+
+L xmlstarlet sel -t -v "//data-filtering//entry[@name='%%PROFILE%%']//data-object "  -n  response V> %%DATAOBJSET%% tout60
+
+L rm -rf key tempkey tout60
+
+L if (%%ALERTTHRESHOLD%% contains 0 OR %%ALERTTHRESHOLD%% isempty OR %%DATAOBJ%% notequal %%DATAOBJSET%%) echo Profile %%PROFILE%% does not have data pattern %%DATAOBJ%% set with an alert threshold : FAIL tout60 
+* F:Profile %%PROFILE%% does not have data pattern %%DATAOBJ%% set with an alert threshold : FAIL
+
+L if (%%ALERTTHRESHOLD%% notcontains 0 OR %%ALERTTHRESHOLD%% isnotempty OR %%DATAOBJ%% equal %%DATAOBJSET%%) echo Profile %%PROFILE%% has data pattern %%DATAOBJ%% set with an alert threshold : PASS tout60 
+* S:Profile %%PROFILE%% has data pattern %%DATAOBJ%% set with an alert threshold : PASS

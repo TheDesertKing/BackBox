@@ -1,0 +1,24 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# Request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/mgt-config/password-complexity&key=`cat key`" | tee response tout60 
+# Response API
+
+L xmlstarlet sel -t -v "//password-complexity/minimum-numeric-letters" -n response V> %%MIN_NUMERIC%% 
+
+L if (%%MIN_NUMERIC%% isempty) echo "0" V> %%MIN_NUMERIC%%
+#Default is 0
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf
+#Cleanup
+
+L if (%%MIN_NUMERIC%% less 1) echo "Minimum Password Numeric Letters is not set to 1 or above. Current setting: %%MIN_NUMERIC%%"
+* F:Minimum Password Numeric Letters is not set to 1 or above. Current setting: %%MIN_NUMERIC%%
+
+L if (%%MIN_NUMERIC%% greater 0) echo "Minimum Password Numeric Letters is set to 1 or above. Current setting: %%MIN_NUMERIC%%"
+* S:Minimum Password Numeric Letters is set to 1 or above. Current setting: %%MIN_NUMERIC%%

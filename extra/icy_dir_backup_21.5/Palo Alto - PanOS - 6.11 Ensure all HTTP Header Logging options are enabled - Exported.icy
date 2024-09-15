@@ -1,0 +1,65 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=op&cmd=<show><config><effective-running><xpath>devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys</xpath></effective-running></config></show>&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//result/vsys/entry/@name" -n response > vsys_list
+
+L cat vsys_list | wc -l V> %%VSYS_COUNTER%%
+
+L head -1 vsys_list; sed -i '1d' vsys_list V> %%VSYS_NAME%%
+
+L xmlstarlet sel -t -c "//result/vsys/entry[@name='%%VSYS_NAME%%']" -n response > vsys_conf
+
+L xmlstarlet sel -t -v "//profiles/url-filtering/entry/@name" -n vsys_conf > profiles
+
+L cat profiles | sed '/^$/d' | wc -l V> %%COUNTER%%
+
+I if (%%COUNTER%% equal 0) gotoline 23 100 
+# VSYS has no url filtering profiles
+
+L head -1 profiles; sed -i '1d' profiles V> %%PROFILE%%
+
+L xmlstarlet sel -t -v "//profiles/url-filtering/entry[@name='%%PROFILE%%']/log-container-page-only" -n vsys_conf V> %%CONTAINER%%
+
+L if (%%CONTAINER%% notcontains no) echo "VSYS %%VSYS_NAME%%: Profile %%PROFILE%% - 'Log container page only' is set, should be not set" >> issues 
+# default is set
+
+L xmlstarlet sel -t -v "//profiles/url-filtering/entry[@name='%%PROFILE%%']/log-http-hdr-user-agent" -n vsys_conf V> %%USERAGENT%% 
+# default is not set
+
+L if (%%USERAGENT%% notcontains yes) echo "VSYS %%VSYS_NAME%%: Profile %%PROFILE%% - 'User-Agent' is not set" >> issues
+
+L xmlstarlet sel -t -v "//profiles/url-filtering/entry[@name='%%PROFILE%%']/log-http-hdr-xff" -n vsys_conf V> %%XFORWARDEDFOR%% 
+# default is not set
+
+L if (%%XFORWARDEDFOR%% notcontains yes) echo "VSYS %%VSYS_NAME%%: Profile %%PROFILE%% - 'X-Forwarded-For' is not set" >> issues
+
+L xmlstarlet sel -t -v "//profiles/url-filtering/entry[@name='%%PROFILE%%']/log-http-hdr-referer" -n vsys_conf V> %%REFERER%% 
+# default is not set
+
+L if (%%REFERER%% notcontains yes) echo "VSYS %%VSYS_NAME%%: Profile %%PROFILE%% - 'Referer' is not set" >> issues
+
+L echo "$((%%COUNTER%% - 1))" V> %%COUNTER%%
+
+I if (%%COUNTER%% greater 0) gotoline 12 100
+
+L echo "$((%%VSYS_COUNTER%% - 1))" V> %%VSYS_COUNTER%%
+
+I if (%%VSYS_COUNTER%% greater 0) gotoline 7 100
+
+L cat issues V> %%ISSUES%%
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf 
+# Cleanup
+
+L if (%%ISSUES%% notcontains such file) echo -e '%%ISSUES%%' 
+* F:%%ISSUES%%
+
+L if (%%ISSUES%% contains such file) echo -e 'All URL Filtering profiles across all VSYS HTTP header logging options are set correctly' 
+* S:All URL Filtering profiles across all VSYS HTTP header logging options are set correctly

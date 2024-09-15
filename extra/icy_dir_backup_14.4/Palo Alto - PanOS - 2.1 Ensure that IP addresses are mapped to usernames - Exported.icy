@@ -1,0 +1,39 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# Request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys&key=`cat key`" | tee response tout60 
+# response
+
+L echo "Checking that all users are mapped with IP address"
+
+L xmlstarlet sel -t -c "/response/result/vsys/entry/user-id-collector/setting" -n response > uids.txt 
+# uids.txt
+
+L cat uids.txt | grep -ow "<wmi-account" | wc -l V> %%UID%% 
+# %%UID%%
+
+L cat uids.txt | grep -ow "<domain-name" | wc -l V> %%YES%% 
+# %%YES%%
+
+L echo "Checking that for each relevant zone User Identification is enabled"
+
+L xmlstarlet sel -t -c "/response/result/vsys/entry/zone" -n response > zone.txt 
+# zone.txt
+
+L cat zone.txt | grep -ow "<entry name" | wc -l V> %%ZONE%% 
+# %%ZONE%%
+
+L cat zone.txt | grep -ow "<enable-user-identification" | wc -l V> %%EUID%% 
+# %%EUID%%
+
+
+L if (%%ZONE%% notequal %%EUID%% OR %%UID%% notequal %%YES%%) echo CIS 2.1 IP addresses are NOT mapped to usernames : FAIL 
+* F:CIS 2.1 IP addresses are NOT mapped to usernames : FAIL
+
+L if (%%ZONE%% equal %%EUID%% AND %%UID%% equal %%YES%%) echo CIS 2.1 IP addresses are mapped to usernames : PASS 
+* S:CIS 2.1 IP addresses are mapped to usernames : PASS

@@ -1,0 +1,52 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/high-availability&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//path-monitoring/enabled" -n response V> %%PATH_MONITORING%% tout60
+
+L if (%%PATH_MONITORING%% contains no) echo "Path Monitoring is Disabled : FAIL" 
+* F:Path Monitoring is Disabled : FAIL
+
+L xmlstarlet sel -t -v "//path-monitoring/failure-condition" -n response V> %%FAIL_COND%% tout60
+
+L if (%%FAIL_COND%% contains all) echo "Path Monitoring is not set to Any : FAIL" 
+* F:Path Monitoring is not set to Any : FAIL
+
+L xmlstarlet sel -t -v "//%%DYN_OPTION_TYPE%%/entry[@name='%%DYN_GROUP_NAME%%']" -n response V> %%PATH_GROUP_EXIST%% tout60
+
+L if (%%PATH_GROUP_EXIST%% isempty) echo "%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% does not exist : FAIL"
+* F:%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% does not exist : FAIL
+
+L xmlstarlet sel -t -v "//%%DYN_OPTION_TYPE%%/entry[@name='%%DYN_GROUP_NAME%%']/failure-condition" -n response V> %%PATH_GROUP_FAIL_COND%% tout60
+
+L if (%%PATH_GROUP_FAIL_COND%% contains all) echo "%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% Failure Condition is not set to Any : FAIL"
+* F:%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% Failure Condition is not set to Any : FAIL
+
+L xmlstarlet sel -t -v "//%%DYN_OPTION_TYPE%%/entry[@name='%%DYN_GROUP_NAME%%']/enabled" -n response V> %%PATH_GROUP_ENABLED%% tout60
+
+L if (%%PATH_GROUP_ENABLED%% notcontains yes AND %%PATH_GROUP_ENABLED%% isnotempty) echo "%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% is Disabled : FAIL"
+* F:%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% is Disabled : FAIL
+
+L xmlstarlet sel -t -v "//%%DYN_OPTION_TYPE%%/entry[@name='%%DYN_GROUP_NAME%%']//destination-ip/member" -n response V> %%DST_IP_GROUP_IPS%% tout60
+
+L if (%%DST_IP_GROUP_IPS%% notcontains %%DYN_DEST_IP%%) echo "%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% does not have %%DYN_DEST_IP%% set as Destination IP : FAIL" 
+* F:%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% does not have %%DYN_DEST_IP%% set as Destination IP
+
+L xmlstarlet sel -t -v "//%%DYN_OPTION_TYPE%%/entry[@name='%%DYN_GROUP_NAME%%']//entry[destination-ip[member='%%DYN_DEST_IP%%']]/enabled" -n response V> %%DST_IP_GROUP_ENABLED%% tout60
+
+L if (%%DST_IP_GROUP_ENABLED%% notcontains yes AND %%DST_IP_GROUP_ENABLED%% isnotempty) echo "%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% Destination IP Group containing %%DYN_DEST_IP%% is Disabled : FAIL" 
+* F:%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% Destination IP Group containing %%DYN_DEST_IP%% is Disabled : FAIL
+
+L xmlstarlet sel -t -v "//%%DYN_OPTION_TYPE%%/entry[@name='%%DYN_GROUP_NAME%%']//entry[destination-ip[member='%%DYN_DEST_IP%%']]/failure-condition" -n response V> %%DST_IP_GROUP_FAIL_COND%% tout60
+
+L if (%%DST_IP_GROUP_FAIL_COND%% notcontains %%DYN_FAIL_COND%%) echo "%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% Failure Condition is not set to %%DYN_FAIL_COND%% : FAIL" 
+* F:%%DYN_OPTION_TYPE%% %%DYN_GROUP_NAME%% Failure Condition is not set to %%DYN_FAIL_COND%% : FAIL
+
+L if (%%DST_IP_GROUP_IPS%% contains %%DYN_DEST_IP%%) echo "S:CIS 3.2 (Part 2) Ensure 'High Availability' requires Link Monitoring and/or Path Monitoring : PASS"
+* S:CIS 3.2 (Part 2) Ensure 'High Availability' requires Link Monitoring and/or Path Monitoring : PASS

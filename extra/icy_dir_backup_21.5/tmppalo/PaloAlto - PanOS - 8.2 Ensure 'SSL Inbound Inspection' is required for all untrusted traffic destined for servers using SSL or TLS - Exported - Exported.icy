@@ -1,0 +1,32 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/rulebase/decryption/rules&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -c "//rules/entry[@name='%%DYN_DEC_RULE%%']" -n response V> %%RULE_EXISTS%%
+
+L if (%%RULE_EXISTS%% isempty) echo "Decryption Rule %%DYN_DEC_RULE%% was not found" 
+* F:Decryption Rule %%DYN_DEC_RULE%% was not found
+
+L xmlstarlet sel -t -v "//rules/entry[@name='%%DYN_DEC_RULE%%']/from/member" -n response V> %%SRC_ZONE%%
+
+L if (%%SRC_ZONE%% equal any) echo "Source Zone is set to any, should be set specifically" 
+* F:Source Zone is set to any, should be set specifically
+
+L xmlstarlet sel -t -v "//rules/entry[@name='%%DYN_DEC_RULE%%']/destination/member" -n response V> %%DST_IP%%
+
+L if (%%DST_IP%% equal any) echo "Destination IP is set to any, should be set specifically" 
+* F:Destination IP is set to any, should be set specifically
+
+L xmlstarlet sel -t -m "//rules/entry[@name='%%DYN_DEC_RULE%%']/type" -v "name(./*)" -n response V> %%PROXY_TYPE%%
+
+L if (%%PROXY_TYPE%% notcontains ssl-inbound-inspection) echo "Option Type is set to %%PROXY_TYPE%%, should be SSL Inbound Inspection" 
+* F:Option Type is set to %%PROXY_TYPE%%, should be SSL Inbound Inspection
+
+L cd %%DBL%%; ls | grep -v logs | xargs rm -rf
+
+L if (%%PROXY_TYPE%% contains ssl-inbound-inspection) echo "Decryption Rule %%DYN_DEC_RULE%% is properly configured with SSL Inbound Inspection" 
+* S:Decryption Rule %%DYN_DEC_RULE%% is properly configured with SSL Inbound Inspection

@@ -1,0 +1,17 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/log-settings&key=`cat key`"  | tee response tout60
+
+L xmlstarlet sel -t -v "//entry[@name='%%LOGFORWARDING%%']/log-type" -n response V> %%WILDFIRE%% tout60
+
+L rm -rf key tempkey tout60
+
+L if (%%WILDFIRE%% notcontains wildfire OR %%WILDFIRE%% isempty OR %%EXCLUDEFILE%% contains yes) echo CIS 5.6 alerts are not enabled for malicious files detected by WildFire : FAIL tout60 
+* F:CIS 5.6 alerts are not enabled for malicious files detected by WildFire : FAIL
+
+L if (%%WILDFIRE%% contains wildfire) echo CIS 5.6 alerts are enabled for malicious files detected by WildFire : PASS tout60 
+* S:CIS 5.6 alerts are enabled for malicious files detected by WildFire : PASS

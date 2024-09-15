@@ -1,0 +1,99 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//result/vsys/entry/@name" -n response > vsys_list
+
+L cat vsys_list | wc -l V> %%VSYS_COUNTER%%
+
+L cat vsys_list | head -1; sed -i '1d' vsys_list V> %%VSYS_NAME%%
+
+L xmlstarlet sel -t -c "//result/vsys/entry[@name='%%VSYS_NAME%%']" -n response > vsys_conf
+
+L xmlstarlet sel -t -v "//virus/entry/@name" -n vsys_conf > antivrus_profiles
+
+L cat antivrus_profiles | sed '/^$/d' | wc -l V> %%COUNTER%%
+
+I if (%%COUNTER%% equal 0) gotoline 43 100
+# VSYS has no antivirus profiles
+
+L cat antivrus_profiles | head -1; sed -i '1d' antivrus_profiles V> %%PROFILE%%
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='smtp']/wildfire-action" -n vsys_conf V> %%SMTP_WF%% 
+
+L if (%%SMTP_WF%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: SMTP WildFire action is set not set to 'drop'. Current setting: %%SMTP_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='smtp']/action" -n vsys_conf V> %%SMTP%% 
+
+L if (%%SMTP%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: SMTP action is set not set to 'drop'. Current setting: %%SMTP%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='smb']/wildfire-action" -n vsys_conf V> %%SMB_WF%% 
+
+L if (%%SMB_WF%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: SMB WildFire action is set not set to 'drop'. Current setting: %%SMB_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='smb']/action" -n vsys_conf V> %%SMB%% 
+
+L if (%%SMB%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: SMB action is set not set to 'drop'. Current setting: %%SMB%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='http2']/wildfire-action" -n vsys_conf V> %%HTTP2_WF%% 
+
+L if (%%HTTP2_WF%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: HTTP2 WildFire action is set not set to 'drop'. Current setting: %%HTTP2_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='http2']/action" -n vsys_conf V> %%HTTP2%%
+
+L if (%%HTTP2%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: HTTP2 action is set not set to 'drop'. Current setting: %%HTTP2%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='http']/wildfire-action" -n vsys_conf V> %%HTTP_WF%% 
+
+L if (%%HTTP_WF%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: HTTP WildFire action is set not set to 'drop'. Current setting: %%HTTP_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='http']/action" -n vsys_conf V> %%HTTP%% 
+
+L if (%%HTTP%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: HTTP action is set not set to 'drop'. Current setting: %%HTTP%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='ftp']/wildfire-action" -n vsys_conf V> %%FTP_WF%% 
+
+L if (%%FTP_WF%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: FTP WildFire action is set not set to 'drop'. Current setting: %%FTP_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='ftp']/action" -n vsys_conf V> %%FTP%% 
+
+L if (%%FTP%% notcontains drop) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: FTP action is set not set to 'drop'. Current setting: %%FTP%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='pop3']/wildfire-action" -n vsys_conf V> %%POP3_WF%% 
+
+L if (%%POP3_WF%% notcontains drop AND %%POP3_WF%% notcontains reset) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: POP3 WildFire action is set not set to 'drop' or 'reset'. Current setting: %%POP3_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='pop3']/action" -n vsys_conf V> %%POP3%% 
+
+L if (%%POP3%% notcontains drop AND %%POP3%% notcontains reset) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: POP3 action is set not set to 'drop' or 'reset'. Current setting: %%POP3%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='imap']/wildfire-action" -n vsys_conf V> %%IMAP_WF%% 
+
+L if (%%IMAP_WF%% notcontains drop AND %%IMAP_WF%% notcontains reset) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: IMAP WildFire action is set not set to 'drop' or 'reset'. Current setting: %%IMAP_WF%%" >> issues
+
+L xmlstarlet sel -t -v "//virus/entry[@name='%%PROFILE%%']/decoder/entry[@name='imap']/action" -n vsys_conf V> %%IMAP%% 
+
+L if (%%IMAP%% notcontains drop AND %%IMAP%% notcontains reset) echo "%%VSYS_NAME%% - Profile %%PROFILE%%: IMAP action is set not set to 'drop' or 'reset'. Current setting: %%IMAP%%" >> issues
+
+L echo "$((%%COUNTER%% - 1))" V> %%COUNTER%%
+
+I if (%%COUNTER%% > 0) gotoline 12 100
+
+L echo "$((%%VSYS_COUNTER%% - 1))" V> %%VSYS_COUNTER%%
+
+I if (%%VSYS_COUNTER%% > 0) gotoline 7 100
+
+L cat issues V> %%ISSUES%%
+
+L cd %%DBL%%; ls | grep -v logs | xargs rm -rf
+#Cleanup
+
+L if (%%ISSUES%% notcontains such file) echo "Not all Antivirus profile have decoders set to drop (or reset if IMAP or POP3): %%RESULTS%%"
+* F:Not all Antivirus profile have decoders set to drop (or reset if IMAP or POP3): %%RESULTS%%
+
+L if (%%ISSUES%% contains such file) echo "IMAP and POP3 are set to 'drop' or reset' and all other decoders are set to drop for every Antivirus profiles"
+* S:IMAP and POP3 are set to 'drop' or reset' and all other decoders are set to drop for every Antivirus profiles

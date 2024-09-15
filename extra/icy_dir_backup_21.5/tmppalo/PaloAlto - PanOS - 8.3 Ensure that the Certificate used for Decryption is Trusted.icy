@@ -1,0 +1,13 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+
+L rm -rf key tempkey
+
+L if (%%NORESCRC%% isempty OR %%NORESCRC%% notcontains yes OR %%UNSPRTEDCIPHER%% isempty OR %%UNSPRTEDCIPHER%% notcontains yes OR %%UNSPRTEDVERSION%% isempty OR %%UNSPRTEDVERSION%% notcontains yes) echo CIS 8.2 'SSL Inbound Inspection' is required for all untrusted traffic destined for servers using SSL or TLS is NOT configured : FAIL 
+* F:CIS 8.2 'SSL Inbound Inspection' is required for all untrusted traffic destined for servers using SSL or TLS is NOT configured : FAIL
+
+L if (%%NORESCRC%% contains yes AND %%UNSPRTEDCIPHER%% contains yes AND %%UNSPRTEDVERSION%% contains yes) echo CIS 8.2 'SSL Inbound Inspection' is required for all untrusted traffic destined for servers using SSL or TLS is configured : PASS 
+* S:CIS 8.2 'SSL Inbound Inspection' is required for all untrusted traffic destined for servers using SSL or TLS is configured : PASS

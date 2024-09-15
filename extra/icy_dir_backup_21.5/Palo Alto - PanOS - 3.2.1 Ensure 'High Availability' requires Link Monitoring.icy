@@ -1,0 +1,55 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/high-availability/group/monitoring/link-monitoring&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//link-monitoring/enabled" -n response V> %%LINK_MONITOR_ENABLE%%
+
+L if (%%LINK_MONITOR_ENABLE%% equal no) echo "Link Monitoring is Disabled" >> issues
+
+L xmlstarlet sel -t -v "//link-monitoring/failure-condition" -n response V> %%FAIL_COND%%
+
+L if (%%FAIL_COND%% contains all) echo "Link Monitoring Fail Condition is not set to Any" >> issues
+
+L xmlstarlet sel -t -v "//link-group/entry/@name" -n response > link_groups
+
+L cat link_groups | sed '/^$/d' | wc -l V> %%COUNTER%%
+
+L if (%%COUNTER%% equal 0) echo "No Link Groups configured" >> issues
+
+I if (%%COUNTER%% equal 0) gotoline 21 1
+
+L head -1 link_groups; sed -i '1d' link_groups V> %%LINK_GROUP%%
+
+L xmlstarlet sel -t -v "//link-group/entry[@name='%%LINK_GROUP%%']/interface/member" -n response > interfaces
+
+L xmlstarlet sel -t -m "//link-group/entry/failure-condition" -i ".='all'" -o "all" -n --else -o "any" -n response V> %%FAIL_COND%%
+
+L echo "Link Group %%LINK_GROUP%%: Failure Condition - %%FAIL_COND%% {" >> groups_details
+
+L cat interfaces | sed 's/^/\t/'; echo '}' >> groups_details
+
+L echo $((%%COUNTER%% - 1)) V> %%COUNTER%%
+
+I if (%%COUNTER%% > 0) gotoline 13 100
+
+L cat groups_details V> %%GROUPS_DETAILS%%
+
+L cat issues V> %%ISSUES%%
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf
+#Cleanup
+
+L if (%%ISSUES%% notcontains such file AND %%GROUPS_DETAILS%% contains %GROUPS_DETAILS%) echo '%%ISSUES%%' 
+* F:%%ISSUES%%
+
+L if (%%ISSUES%% notcontains such file AND %%GROUPS_DETAILS%% notcontains %GROUPS_DETAILS%) echo '%%ISSUES%%\nConfigured Link Group settings:\n%%GROUPS_DETAILS%%' 
+* F:%%ISSUES%%%%ENTER%%Configured Link Groups settings:%%ENTER%%%%GROUPS_DETAILS%%
+
+L if (%%ISSUES%% contains such file) echo 'Link Monitoring is configured correctly. Current Link Group settings:\n%%GROUPS_DETAILS%%'
+* S:Link Monitoring is configured correctly. Current Link Group settings:%%ENTER%%%%GROUPS_DETAILS%%

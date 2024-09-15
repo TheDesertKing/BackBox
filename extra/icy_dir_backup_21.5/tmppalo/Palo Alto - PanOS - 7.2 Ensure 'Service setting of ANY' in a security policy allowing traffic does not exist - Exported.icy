@@ -1,0 +1,47 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/rulebase/security/rules&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']" -n response V> %%POLICY%% 
+
+L if (%%POLICY%% isempty) echo "Security Policy %%DYN_SEC_POLICY%% not found"
+* F:Security Policy %%DYN_SEC_POLICY%% not found
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/from/member" -n response V> %%SRC_ZONE%% 
+
+L if (%%SRC_ZONE%% equal any) echo "Source zone is set to any, should be set specifically"
+* F:Source zone is set to any, should be set specifically
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/source/member" -n response V> %%SRC_ADDRESS%% 
+
+L if (%%SRC_ADDRESS%% notequal any) echo "Source address is not set to any, should be set to any"
+* F:Source address is not set to any, should be set to any
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/to/member" -n response V> %%DST_ZONE%% 
+
+L if (%%DST_ZONE%% equal any) echo "Destination zone is set to any, should be set specifically"
+* F:Destination zone is set to any, should be set specifically
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/destination/member" -n response V> %%DST_ADDRESS%% 
+
+L if (%%DST_ADDRESS%% equal any) echo "Destination address is set to any, should be set specifically"
+* F:Destination address is set to any, should be set specifically
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/application/member" -n response V> %%APPLICATION%% 
+
+L if (%%APPLICATION%% equal any) echo "Application is set to any, should be set specifically"
+* F:Application is set to any, should be set specifically
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_SEC_POLICY%%']/service/member" -n response V> %%SERVICE%% 
+
+L if (%%SERVICE%% notequal application-default) echo "Service is set to %%SERVICE%%, should be set to application-default"
+* F:Service is set to %%SERVICE%%, should be set to application-default
+
+L rm -rf key tempkey response
+
+L if (%%SRC_ZONE%% notequal any AND %%SRC_ADDRESS%% equal any AND %%DST_ZONE%% notequal any AND %%DST_ADDRESS%% notequal any AND %%APPLICATION%% noteqal any AND %%SERVICE%% equal application-default) echo CIS 7.2 'Service setting of ANY' in a security policy allowing traffic does not exist is set : PASS tout60 
+* S:CIS 7.2 'Service setting of ANY' in a security policy allowing traffic does not exist is set : PASS

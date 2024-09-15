@@ -1,0 +1,25 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/system/service&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "/response/result/service/disable-telnet" -n response V> %%DISABLE_TELNET%%
+
+L xmlstarlet sel -t -v "/response/result/service/disable-http" -n response V> %%DISABLE_HTTP%%
+
+L if (%%DISABLE_TELNET%% isempty OR %%DISABLE_TELNET%% contains no) echo "TELNET is not disabled" >> issues
+
+L if (%%DISABLE_HTTP%% isempty OR %%DISABLE_HTTP%% contains no) echo "HTTP is not disabled" >> issues
+
+L cat issues V> %%ISSUES%%
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf
+
+L if (%%ISSUES%% notcontains No such file) echo "%%ISSUES%% for the Management Interface"
+* F:%%ISSUES%% for the Management Interface
+
+L if (%%ISSUES%% contains No such file) echo "HTTP and TELNET are both disabled for the Management Interface"
+* S:HTTP and TELNET are both disabled for the Management Interface

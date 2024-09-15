@@ -1,0 +1,19 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/setting/management&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "/response/result/management/enable-log-high-dp-load" -n response V> %%HIGH_DP_LOAD%%
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf
+
+L if (%%HIGH_DP_LOAD%% isempty OR %%HIGH_DP_LOAD%% notcontains yes) echo "Enable Log On High DP Load is not set"
+* F:Enable Log On High DP Load is not set
+
+L if (%%HIGH_DP_LOAD%% contains yes) echo "Enable Log On High DP Load is set"
+* S:Enable Log On High DP Load is set

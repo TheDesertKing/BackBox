@@ -1,3 +1,7 @@
+* add 'open existing icy file' option when importing a signature already existing
+
+* add \>> to vim highlighting
+
 * add macro icyopen which allows for fuzzy searching and opening in vim icy scripts from icy dir
 
 * add jumping variables, local to icy, allowing for dynamic jumps

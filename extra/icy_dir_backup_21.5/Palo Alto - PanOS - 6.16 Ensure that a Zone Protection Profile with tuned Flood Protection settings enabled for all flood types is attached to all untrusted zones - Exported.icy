@@ -1,0 +1,42 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key tout60 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=op&cmd=<show><config><effective-running><xpath>devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys</xpath></effective-running></config></show>&key=`cat key`" | tee response tout60
+
+I url_encode %%ZONE%% V> %%URL_ENCODED_ZONE%%
+# USELESS REMOVE THIS
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/zone/entry%5B%40name%3D%27%%URL_ENCODED_ZONE%%%27%5D&key=`cat key`"  | tee  response-new tout60
+# USELESS REMOVE THIS
+
+L xmlstarlet sel -t -v "/response/result/entry/network/zone-protection-profile" -n response-new V> %%PROFILE%% tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/network/profiles/zone-protection-profile&key=`cat key`"  | tee  response > response.txt tout60
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%PROFILE%%']/flood/tcp-syn/enable" -n response V> %%SYN%% tout60 
+# %%SYN%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%PROFILE%%']/flood/udp/enable" -n response V> %%UDP%% tout60 
+# %%UDP%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%PROFILE%%']/flood/icmp/enable" -n response V> %%ICMP%% tout60 
+# %%ICMP%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%PROFILE%%']/flood/icmpv6/enable" -n response V> %%ICMPV%% tout60 
+# %%ICMPV%%
+
+L xmlstarlet sel -t -v "//zone-protection-profile/entry[@name='%%PROFILE%%']/flood/other-ip/enable" -n response V> %%OTHER%% tout60 
+# %%OTHER%%
+
+L rm -rf key tempkey tout60
+
+L if (%%SYN%% isempty OR %%SYN%% notcontains yes OR %%UDP%% isempty OR %%UDP%% notcontains yes OR %%ICMP%% isempty OR %%ICMP%% notcontains yes OR %%ICMPV%% isempty OR %%ICMPV%% notcontains yes OR %%OTHER%% isempty OR %%OTHER%% notcontains yes) echo Zone %%ZONE%% does not have flood protection settings enabled for all flood types : FAIL tout60 
+* F:Zone %%ZONE%% does not have flood protection settings enabled for all flood types : FAIL
+
+L if (%%SYN%% contains yes AND %%UDP%% contains yes AND %%ICMP%% contains yes AND %%ICMPV%% contains yes AND %%OTHER%% contains yes) echo Zone %%ZONE%% has flood protection settings enabled for all flood types : PASS tout60 
+* S:Zone %%ZONE%% has flood protection settings enabled for all flood types : PASS

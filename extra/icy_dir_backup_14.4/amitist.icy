@@ -1,0 +1,11 @@
+L echo "abc" > file
+
+L cd %%DBL%%
+
+L echo -e  "\n" >> file
+
+L echo "abc" >> file
+
+L cat file
+
+L cat file | wc -l

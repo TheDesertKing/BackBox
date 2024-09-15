@@ -1,0 +1,26 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/setting/management/idle-timeout&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//idle-timeout" -n response V> %%IDLE%%
+
+L if (%%IDLE%% isempty) echo "60" V> %%IDLE%%
+#Default is 60
+
+L if (%%IDLE%% equal 0) echo "disabled" V> %%IDLE%%
+#Default is 60
+
+L cd %%DBL%%; ls | grep -v logs | xargs rm -rf
+#Cleanup
+
+L if (%%IDLE%% greater 10 OR %%IDLE%% contains disabled) echo "Idle Timeout is set to more than 10 minutes or is disabled. Current setting: %%IDLE%%"
+* F:Idle Timeout is set to more than 10 minutes or is disabled. Current setting: %%IDLE%%
+
+L if (%%IDLE%% less 11) echo "Idle Timeout is set to 10 minutes or less. Current setting: %%IDLE%%"
+* S:Idle Timeout is set to 10 minutes or less. Current setting: %%IDLE%%

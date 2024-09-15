@@ -1,0 +1,24 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/high-availability/group&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//preemptive" -n response V> %%PREEMPTIVE%% tout60
+
+L xmlstarlet sel -t -v "//passive-link-state" -n response V> %%LINK_STATE%% tout60
+
+L if (%%LINK_STATE%% notcontains auto) echo "Passive Link State is not set to auto"
+* F:Passive Link State is not set to auto
+
+L if (%%PREEMPTIVE%% contains yes) echo "Electron setting Preemtive is enabled, should be disabled"
+* F:Electron setting Preemtive is enabled, should be disabled
+
+L rm -rf key tempkey response tout60
+
+L if (%%LINK_STATE%% equal auto) echo CIS 3.3 'Passive Link State' and 'Preemptive' are configured appropriately : PASS 
+* S:CIS 3.3 'Passive Link State' and 'Preemptive' are configured appropriately : PASS

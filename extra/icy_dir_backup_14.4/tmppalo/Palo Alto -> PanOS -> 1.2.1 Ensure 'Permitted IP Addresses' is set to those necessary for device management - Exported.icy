@@ -1,0 +1,21 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p'  tempkey > key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/network/profiles/interface-management-profile/entry%5B%40name%3D%27Test%27%5D&key=`cat key`"  | tee  response tout60
+
+L xmlstarlet sel -t -v "/response/result/entry/https"  -n  response V> %%HTTPS%% tout60
+
+L xmlstarlet sel -t -v "/response/result/entry/ssh"  -n  response V> %%SSH%% tout60
+
+L xmlstarlet sel -t -v "/response/result/entry/permitted-ip/entry/@name" -n response V> %%PERMITTEDIP%% tout60
+
+L rm -rf key tempkey tout60
+
+L if (%%HTTPS%% notcontains yes OR %%HTTPS%% isempty OR %%SSH%% notcontains yes OR %%SSH%% isempty OR %%PERMITTEDIP%% isempty) echo CIS 1.2.1 'Permitted IP Addresses' is not set to those necessary for device  management : FAIL tout60 
+* F:CIS 1.2.1 'Permitted IP Addresses' is not set to those necessary for device  management : FAIL
+
+L if (%%HTTPS%% contains yes AND %%SSH%% contains yes AND %%PERMITTEDIP%% isnotempty) echo CIS 1.2.1 'Permitted IP Addresses' is set to those necessary for device  management : PASS tout60 
+* S:CIS 1.2.1 'Permitted IP Addresses' is set to those necessary for device  management : PASS

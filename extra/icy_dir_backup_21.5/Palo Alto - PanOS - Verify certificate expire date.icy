@@ -1,0 +1,43 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/shared/certificate&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -m "//certificate/entry" -v "@name" -n response > certificate_list
+
+L cat certificate_list | wc -l V> %%COUNTER%%
+
+L cat certificate_list | head -1; sed -i '1d' certificate_list V> %%CERT_NAME%%
+
+L xmlstarlet sel -t -v "//entry[@name='%%CERT_NAME%%']/not-valid-before" -n response V> %%NOT_VALID_BEFORE%%
+
+L xmlstarlet sel -t -v "//entry[@name='%%CERT_NAME%%']/not-valid-after" -n response V> %%NOT_VALID_AFTER%%
+
+L echo $(($(date '+%s')-$(date -d "%%NOT_VALID_BEFORE%%" '+%s'))) V> %%NOT_VALID_BEFORE%%
+
+L if (%%NOT_VALID_BEFORE%% less 0) echo "Certificate %%CERT_NAME%% is not valid, start date is in the future" >> issues
+
+L echo $(($(date -d "%%NOT_VALID_AFTER%%" '+%s')-$(date '+%s'))) V> %%IS_EXPIRED%%
+
+L echo $((($(date -d "%%NOT_VALID_AFTER%% -%%DYN_DAYS%% days" '+%s')-$(date '+%s'))/86400)) V> %%IS_WARN_EXPIRE%%
+
+L if (%%IS_EXPIRED%% less 0) echo "Certificate %%CERT_NAME%% has expired" >> issues
+
+L if (%%IS_EXPIRED%% greater 0 AND %%IS_WARN_EXPIRE%% less %%DYN_DAYS%%) echo "Certificate %%CERT_NAME%% will expire in %%IS_WARN_EXPIRE%% days" >> issues
+
+L echo $((%%COUNTER%% - 1)) V> %%COUNTER%%
+
+I if (%%COUNTER%% > 0) gotoline 7 100
+
+L cat issues V> %%ISSUES%%
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf issues
+
+L if (%%ISSUES%% isnotempty AND %%ISSUES%% notcontains such file) echo "Certificates found within warning date or expired: %%ISSUES%%"
+* F:Certificates found within warning date or expired: %%ISSUES%%
+
+L if (%%ISSUES%% isempty OR %%ISSUES%% contains such file) echo "All certificates are valid and won't expire within %%DYN_DAYS%% days"
+* S:All certificates are valid and won't expire within %%DYN_DAYS%% days

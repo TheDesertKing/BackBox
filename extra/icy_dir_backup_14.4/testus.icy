@@ -1,0 +1,5 @@
+L echo "" V> %%A%%
+
+L if (%%A%% equal %%DYN%%) echo "yes"
+
+L if (%%A%% notequal %%DYN%%) echo "yes"

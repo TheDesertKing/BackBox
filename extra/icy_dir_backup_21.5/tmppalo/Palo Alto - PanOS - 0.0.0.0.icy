@@ -1,0 +1,51 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' tout612
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/shared/log-settings&key=`cat key`"  | tee response tout60
+
+L xmlstarlet sel -t -m "//syslog/entry" -v "@name" -n response tout60 
+# %%SYSLOGPROF%%
+
+L cat profiles | awk 'END {print NR}'
+
+L head -1 profiles; sed -i '1d' profiles
+
+L xmlstarlet sel -t -m "//system/match-list/entry[send-syslog/member='%%SYSLOGPROF%%' and filter='All Logs']" -v "@name" -n response tout60 
+# %%SYSTEM%%
+
+L xmlstarlet sel -t -m "//config/match-list/entry[send-syslog/member='%%SYSLOGPROF%%' and filter='All Logs']" -v "@name" -n response tout60 
+# %%CONFIGURATION%%
+
+L xmlstarlet sel -t -m "//userid/match-list/entry[send-syslog/member='%%SYSLOGPROF%%' and filter='All Logs']" -v "@name" -n response tout60 
+# %%USERID%%
+
+L xmlstarlet sel -t -m "//hipmatch/match-list/entry[send-syslog/member='%%SYSLOGPROF%%' and filter='All Logs']" -v "@name" -n response tout60 
+# %%HIPMATCH%%
+
+L xmlstarlet sel -t -m "//iptag/match-list/entry[send-syslog/member='%%SYSLOGPROF%%' and filter='All Logs']" -v "@name" -n response tout60 
+# %%IPTAG%%
+
+L echo $((%%COUNT%%-1))
+
+I if (%%COUNT%% greater 0) gotoline 7 100
+
+L cat system | sed '/^$/d' | awk 'END {print NR}'
+
+L cat config | sed '/^$/d' | awk 'END {print NR}'
+
+L cat userid | sed '/^$/d' | awk 'END {print NR}'
+
+L cat hip | sed '/^$/d' | awk 'END {print NR}'
+
+L cat iptag | sed '/^$/d' | awk 'END {print NR}'
+
+L rm -rf key tempkey system config userid hip iptag tout60
+
+L if (%%SYSLOGPROF%% isempty OR %%CONFIGURATION%% less 1 OR %%USERID%% less 1 OR %%HIPMATCH%% less 1 OR %%IPTAG%% less 1 OR %%SYSTEM%% less 1) echo CIS 1.1.1.1 Syslog logging is NOT configured : FAIL tout60 
+* F:CIS 1.1.1.1 Syslog logging is NOT configured : FAIL
+
+L if (%%SYSLOGPROF%% isnotempty AND %%CONFIGURATION%% greater 0 AND %%USERID%% greater 0 AND %%HIPMATCH%% greater 0 AND %%IPTAG%% greater 0 AND %%SYSTEM%% greater 0) echo CIS 1.1.1.1 Syslog logging is configured  : PASS tout60 
+* S:CIS 1.1.1.1 Syslog logging is configured  : PASS

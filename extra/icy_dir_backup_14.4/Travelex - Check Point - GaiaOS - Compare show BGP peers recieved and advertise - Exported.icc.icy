@@ -1,0 +1,99 @@
+I connect 
+# Connect to the first member
+
+R cphaprob stat | grep -i local | grep -i "active" V> %%STATUS%% 
+# The InteliCheck will only be performed on the active member 
+& S:# S:> S:%%CURRENT_PROMPT%%
+
+R if (%%STATUS%% isempty) echo "This test will only run on the active member, this device isn't the active member Exiting..." 
+# The InteliCheck will only be performed on the active member 
+& S:# S:> S:%%CURRENT_PROMPT%% 
+* S:This test will only run on the active member Exiting,..
+
+R clish -c "show bgp peers received" > machine.txt 
+& S::0]#
+
+R clish -c "show bgp peers advertise" >> machine.txt 
+& S::0]#
+
+R clish -c "show configuration route-redistribution" > machine.txt 
+& S::0]#
+
+R clish -c "show configuration aggregate" >> machine.txt 
+& S::0]#
+
+I disconnect 
+# Disconnect from the first device in order to collect configuration from the second device
+
+R ssh %%USER%%@%%HOST%% -p %%PORT%% V> %%SSH_CONNECT_RESPONSE%% 
+# Connecting to DR 
+& F:REMOTE HOST IDENTIFICATION HAS CHANGE S:assword: S:# S:> S:connecting (yes/no) S:connecting F:Connection timed out F:Connection refused F:No route to host
+
+R if (%%SSH_CONNECT_RESPONSE%% contains connecting (yes/no)) yes V> %%SSH_CONNECT_RESPONSE%% 
+& S:# S:> S:assword: S:denied F:Name or service not known F:Connection timed out F:Connection refused F:Invalid argument F:No route to host
+
+R if (%%PASSWORD%% isnotempty) %%PASSWORD%% 
+& F:enied F:Connection S:]# S:>
+
+I getlastline > %%Initial_Prompt%%
+
+R if (%%Initial_Prompt%% contains >) lock database override 
+& S:# S:>
+
+R if (%%Initial_Prompt%% contains >) expert 
+# Extra login 
+& S:assword: F:Permission F:Invalid ar F:Connection F:Unknown connection SUS:suspectus
+
+R if (%%Initial_Prompt%% contains >) %%SU_PASSWORD%%
+
+R export TMOUT=36000 
+& S:#
+
+R getlastline V> %%CURRENT_PROMPT%% 
+# Connection  achieved
+
+R cphaprob stat | grep -i local | grep -i "active" V> %%DR_STATUS%% 
+# The InteliCheck will only be performed on the active member 
+& S:# S:> S:%%CURRENT_PROMPT%%
+
+R if (%%DR_STATUS%% isempty) echo "This test will only run on the active member, DR isn't the active member Exiting..." 
+# The InteliCheck will only be performed on the active member 
+& S:# S:> S:%%CURRENT_PROMPT%% 
+* S:This test will only run on the active member, DR isn't the active member Exiting...
+
+R clish -c "show bgp peers received" > dr.txt 
+& S::0]#
+
+R clish -c "show bgp peers advertise" >> dr.txt 
+& S::0]#
+
+R clish -c "show configuration route-redistribution" > dr.txt 
+& S::0]#
+
+R clish -c "show configuration aggregate" >> dr.txt 
+& S::0]#
+
+L cd %%DEFAULT_BACKUP_LOCATION%%
+
+L grep -vFxf machine.txt dr.txt | wc -l V> %%DIFF1%% 
+# Check if the files are identical
+
+L grep -vFxf dr.txt machine.txt | wc -l V> %%DIFF2%% 
+# Check if the files are identical
+
+L echo -e "Found on %%DR_IP%% and not on %%DEVICE_NAME%%\n##########"  ; grep -vFxf machine.txt dr.txt > logs/results.log 
+# Check if the files are identical
+
+L echo -e "Found on %%DEVICE_NAME%% and not on its cluster member %%DR_IP%%\n##########" ; grep -vFxf dr.txt machine.txt >> logs/results.log 
+# Check if the files are identical
+
+L if (%%DIFF1%% greater 0 OR %%DIFF2%% greater 0) cat logs/results.log V> %%RESULTS%% 
+# If the diff output is not empty, there are differences
+
+L if (%%DIFF1%% greater 0 OR %%DIFF2%% greater 0) echo "Files are not identical,The Results are:%%ENTER%%%%RESULTS%%%%ENTER%%you can also review the results-log tab to see the differences" 
+# If the diff output is not empty, there are differences 
+* F:Files are not identical,The Results are:%%ENTER%%%%RESULTS%%%%ENTER%%you can also review the results-log tab to see the differences
+
+L if (%%DIFF1%% equal 0 AND %%DIFF1%% equal 0) echo "Files are identical" 
+# If the diff output is empty, there is no difference 
+* S:Files are identical

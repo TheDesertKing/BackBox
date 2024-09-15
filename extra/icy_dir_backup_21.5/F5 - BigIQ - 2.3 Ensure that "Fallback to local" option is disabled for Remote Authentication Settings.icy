@@ -1,0 +1,12 @@
+I connect
+
+R list auth source fallback > fallback.txt 
+& S:'(tmos)' S:'@'
+
+L cat %%DBL%%/fallback.txt | grep "fallback" V> %%FALLBACKSTATUS%% tout60
+
+L if (%%FALLBACKSTATUS%% isempty OR %%FALLBACKSTATUS%% notcontains true) echo CIS 2.3 "Fallback to local" option is NOT disabled for Remote Authentication Settings : FAIL tout60
+* F:CIS 2.3 "Fallback to local" option is NOT disabled for Remote Authentication Settings : FAIL
+
+L if (%%FALLBACKSTATUS%% contains true) echo CIS 2.3 "Fallback to local" option is disabled for Remote Authentication Settings : PASS tout60 
+* S:CIS 2.3 "Fallback to local" option is disabled for Remote Authentication Settings : PASS

@@ -1,0 +1,23 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/system/update-schedule/anti-virus&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//recurring/hourly/action" -n response V> %%ACTION%%
+
+L xmlstarlet sel -t -v "name(//recurring/*)" -n response V> %%RECURRING%%
+
+L if (%%ACTION%% isempty) echo "none" V> %%ACTION%%
+# default is none
+
+L cd %%DBL%%; ls | grep -v logs | xargs rm -rf
+#Cleanup
+
+L if (%%ACTION%% notcontains download-and-install) echo "Antivirus Update Schedule is not set to download and install hourly. Current setting: %%RECURRING%%"
+* F:Antivirus Update Schedule is not set to download and install hourly. Current setting: %%ACTION%%
+
+L if (%%ACTION%% contains download-and-install) echo "Antivirus Update Schedule is set to download and install hourly"
+* S:Antivirus Update Schedule is set to download and install hourly

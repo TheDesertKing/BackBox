@@ -1,0 +1,32 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/deviceconfig/high-availability&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//path-monitoring/enabled" -n response V> %%PATH_MONITORING%%
+
+L if (%%PATH_MONITORING%% contains no) echo "Path Monitoring is Disabled" >> issues
+
+L xmlstarlet sel -t -v "//path-monitoring/failure-condition" -n response V> %%FAIL_COND%%
+
+L if (%%FAIL_COND%% contains all) echo "Path Monitoring is not set to Any" >> issues
+
+L xmlstarlet sel -t -m "//path-group/*" -v "name(.)" -n response V> %%PATH_TYPES%%
+
+L if (%%PATH_TYPES%% equal 0) echo 'No Path Groups configured' >> issues
+
+L cat issues V> %%ISSUES%%
+
+L cd %%DBL%%; ls | grep -v logs | tee /dev/tty | xargs rm -rf
+#Cleanup
+
+L if (%%ISSUES%% notcontains such file) echo '%%ISSUES%%\nCurrently configured Path Group types:\n%%PATH_TYPES%%'
+* F:%%ISSUES%%%%ENTER%%Currently configured Path Group types:%%ENTER%%%%PATH_TYPES%%
+
+L if (%%ISSUES%% contains such file) echo 'Path Monitoring is configured correctly. Currently configured Path Group types:\n%%PATH_TYPES%%'
+* S:Path Monitoring is configured correctly. Currently configured Path Group types:%%ENTER%%%%PATH_TYPES%%

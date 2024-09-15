@@ -1,0 +1,19 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' > tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey > key tout60 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D//network/profiles/interface-management-profile&key=`cat key`" | tee response tout60
+
+L xmlstarlet sel -t -v "//entry[@name='%%DYN_PROFILE%%']/userid-service" -n response V> %%USERID%% tout60 
+
+L rm -rf key tempkey response tout60
+
+L if (%%USERID%% contains yes) echo CIS 2.3 User-ID is ENABLED for profile of untrusted interface %%DYN_PROFILE%% : FAIL tout60 
+* F:CIS 2.3 User-ID is ENABLED for profile of untrusted interface %%DYN_PROFILE%% : FAIL
+
+L if (%%USERID%% isempty OR %%USERID%% contains no) echo CIS 2.3 User-ID is DISABLED for profile of untrusted interface %%DYN_PROFILE%% : PASS tout60 
+* S:CIS 2.3 User-ID is DISABLED for profile of untrusted interface %%DYN_PROFILE%% : PASS

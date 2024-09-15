@@ -1,0 +1,37 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key tout60 
+# Parse Token
+
+L curl -k "https://%%HOST%%/api/?type=op&cmd=<show><config><effective-running><xpath>devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys</xpath></effective-running></config></show>&key=`cat key`" | tee response tout60
+
+I url_encode %%ZONE%% V> %%URL_ENCODED_ZONE%%
+# USELESS REMOVE THIS
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/zone/entry%5B%40name%3D%27%%URL_ENCODED_ZONE%%%27%5D&key=`cat key`"  | tee  zone_response tout60
+# USELESS REMOVE THIS
+
+L xmlstarlet sel -t -v "//zone-protection-profile" -n zone_response V> %%PROFILE%%
+
+I url_encode %%PROFILE%% V> %%URL_ENCODED_PROFILE%%
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/network/profiles/zone-protection-profile/entry%5B%40name%3D%27%%URL_ENCODED_PROFILE%%%27%5D&key=`cat key`"  | tee  profile_response tout60
+
+L xmlstarlet sel -t -v "//syn-cookies/alarm-rate" -n profile_response V> %%ALERT_SET%%
+
+L xmlstarlet sel -t -v "//syn-cookies/activate-rate" -n profile_response V> %%ACTIVATE_SET%%
+
+L xmlstarlet sel -t -v "//syn-cookies/maximal-rate" -n profile_response V> %%MAX_SET%%
+
+L xmlstarlet sel -t -v "//tcp-syn/enable" -n profile_response V> %%SYN_ENABLED%%
+
+L rm -rf key tempkey profile_response zone_response tout60
+
+L if (%%PROFILE%% isempty OR %%ALERT%% notequal %%ALERT_SET%% OR %%ACTIVATE%% notequal %%ACTIVATE_SET%% OR %%MAX%% notequal %%MAX_SET%% OR %%SYN_ENABLED%% notcontains yes) echo Zone %%ZONE%% does not have SYN flood action of SYN cookies enabled : FAIL tout60 
+* F:Zone %%ZONE%% does not have SYN flood action of SYN cookies enabled : FAIL
+
+L if (%%PROFILE%% isnotempty OR %%ALARM%% equal %%ALARM_SET%% OR %%ACTIVATE%% equal %%ACTIVATE_SET%% OR %%MAX%% equal %%MAX_SET%% OR %%SYN_ENABLED%% equal yes) echo Zone %%ZONE%% has SYN flood action of SYN cookies enabled : PASS tout60 
+* S:Zone %%ZONE%% has SYN flood action of SYN cookies enabled : PASS

@@ -1,0 +1,23 @@
+L cd %%DBL%%
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60 
+# Request Token
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key 
+# Parse Key
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/mgt-config/password-complexity&key=`cat key`" | tee response tout60 
+# Response API
+
+L xmlstarlet sel -t -v "//result/password-complexity/minimum-lowercase-letters" -n response V> %%MIN_LOWER%%
+
+L if (%%MIN_LOWER%% isempty) echo "0" V> %%MIN_LOWER%%
+#Default is 0
+
+L cd %%DBL%%; ls | grep -v logs | xargs rm -rf
+
+L if (%%MIN_LOWER%% less 1) echo "Minimum Password Lower Case Letters is not set to 1 or above. Current setting: %%MIN_LOWER%%"
+* F:Minimum Password Lower Case Letters is not set to 1 or above. Current setting: %%MIN_LOWER%%
+
+L if (%%MIN_LOWER%% greater 0) echo "Minimum Password Lower Case Letters is set to 1 or above. Current setting: %%MIN_LOWER%%"
+* S:Minimum Password Lower Case Letters is set to 1 or above. Current setting: %%MIN_LOWER%%

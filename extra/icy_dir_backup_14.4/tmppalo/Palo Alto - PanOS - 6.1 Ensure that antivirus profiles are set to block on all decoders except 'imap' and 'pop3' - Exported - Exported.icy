@@ -1,0 +1,57 @@
+L cd %%DBL%% tout60
+
+L curl -k -i -X GET 'https://%%HOST%%/api/?type=keygen&user=%%USER%%&password=%%PASSWORD%%' \> tempkey tout60
+
+L sed -n 's/.*<key>\([^<]*\)<\/key>.*/\1/p' tempkey \> key tout60
+
+L curl -k "https://%%HOST%%/api/?type=config&action=get&xpath=/config/devices/entry%5B%40name%3D%27localhost.localdomain%27%5D/vsys/entry%5B%40name%3D%27vsys1%27%5D/profiles/virus&key=`cat key`"  | tee  response tout60
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='smtp']/wildfire-action" -n -nl response V> %%SMTP-WF%% tout60 
+# %%SMTP-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='smtp']/action" -n  response V> %%SMTP%% tout60 
+# %%SMTP%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='smb']/wildfire-action" -n -nl response V> %%SMB-WF%% tout60 
+# %%SMB-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='smb']/action" -n  response V> %%SMB%% tout60 
+# %%SMB%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='pop3']/wildfire-action" -n -nl response V> %%POP3-WF%% tout60 
+# %%POP3-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='pop3']/action" -n  response V> %%POP3%% tout60 
+# %%POP3%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='imap']/wildfire-action" -n -nl response V> %%IMAP-WF%% tout60 
+# %%IMAP-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='imap']/action" -n  response V> %%IMAP%% tout60 
+# %%IMAP%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='http2']/wildfire-action" -n -nl response V> %%HTTP2-WF%% tout60 
+# %%HTTP2-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='http2']/action" -n  response V> %%HTTP2% tout60 
+# %%HTTP2%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='http']/wildfire-action" -n -nl response V> %%HTTP-WF%% tout60 
+# %%HTTP-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='http']/action" -n  response V> %%HTTP%% tout60 
+# %%HTTP%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='ftp']/wildfire-action" -n -nl response V> %%FTP-WF%% tout60 
+# %%FTP-WF%%
+
+L xmlstarlet sel -t -v "/response/result/virus/entry/decoder/entry[@name='ftp']/action" -n  response V> %%FTP%% tout60 
+# %%FTP%%
+
+L rm -rf key tempkey tout60
+
+L if (%%SMTP-WF%% isempty OR %%SMTP-WF%% contains alert OR %%SMTP%% isempty OR %%SMTP%% contains alert OR %%FTP-WF%% isempty OR %%FTP-WF%% contains alert OR %%FTP%% isempty OR %%FTP%% contains alert OR %%HTTP-WF%% isempty OR %%HTTP-WF%% contains alert OR %%HTTP%% isempty OR %%HTTP%% contains alert OR %%HTTP2-WF%% isempty OR %%HTTP2-WF%% contains alert OR %%HTTP2%% isempty OR %%HTTP2%% contains alert OR %%IMAP-WF%% isempty OR %%IMAP-WF%% notcontains alert OR %%IMAP%% isempty OR %%IMAP%% notcontains alert OR %%POP3-WF%% isempty OR %%POP3-WF%% notcontains alert OR %%POP3%% isempty OR %%POP3%% notcontains alert OR %%SMB-WF%% isempty OR %%SMB-WF%% contains alert OR %%SMB%% isempty OR %%SMB%% contains alert) echo "CIS 6.1 Antivirus profiles are NOT SET to block on all decoders except 'imap' and 'pop3'" : FAIL tout60 
+* F:CIS 6.1 Antivirus profiles are NOT SET to block on all decoders except 'imap' and 'pop3' : FAIL
+
+L if (%%SNMP-WF%% notcontains alert AND %%SNMP%% notcontains alert AND %%IMAP-WF%% contains alert AND %%IMAP%% contains alert AND %%POP3-WF%% contains alert AND %%POP3%% contains alert AND %%HTTP-WF%% notcontains alert AND %%HTTP%% notcontains alert AND %%HTTP2-WF%% notcontains alert AND %%HTTP2%% notcontains alert AND %%FTP-WF%% notcontains alert AND %%FTP%% notcontains alert AND %%SMB-WF%% notcontains alert AND %%SMB%% notcontains alert) echo "CIS 6.1 Antivirus profiles are SET to block on all decoders except 'imap' and 'pop3'"  :  PASS tout60 
+* S:CIS 6.1 Antivirus profiles are SET to block on all decoders except 'imap' and 'pop3'  :  PASS
