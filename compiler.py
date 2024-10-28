@@ -128,7 +128,7 @@ def get_command_line_parts(command_line):
     else:
         p['tout'] = False
 
-    if remaining_cmd_line[-2] in ['\>','\>>']:
+    if len(remaining_cmd_line) > 2 and remaining_cmd_line[-2] in ['\>','\>>']:
         # remove the backslash
         remaining_cmd_line[-2] = remaining_cmd_line[-2][1:]
         p['saveto'] = False
