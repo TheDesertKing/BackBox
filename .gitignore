@@ -1,7 +1,11 @@
-node_modules
-icy
-icc
+#global gitignores
+icc/
+icy/
+compiled/
+conf/
+
 signature_data.map
 __pycache__
-extra/icydir_backup*
-extra/tmp
+#personal gitignores
+dev
+extra

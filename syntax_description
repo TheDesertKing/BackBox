@@ -1,0 +1,19 @@
+Structure:
+
+T COND CMD ST SL TOUT SLP HIDE
+# DESC
+& WAITFOR
+* STAT
+
+T = command type (I,R,L)
+COND = condition (if(%%A%% = %%B%%))
+CMD = command (echo "123")
+ST = save type and file permissions (>,>>,V>,600>) {\> is regarded as > being part of the command}
+SL = save location (%%VAR%%,abc.txt)
+TOUT = timeout (tout30,tout10800) [seconds]
+SLP = sleep (slp15,slp200) [seconds]
+HIDE = hide output (hide)
+DESC = description (send to Backbox via TFTP)
+WAITFOR = wait for conditions (S:'$' F:'Error' SUS:'Suspecious' S:R'[0-9]')
+STAT = status (S: 1.2.3 Succesful,F: 3.2.1 FAILED, SUS: 2.2.2 suspect)
+
