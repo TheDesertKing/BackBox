@@ -129,8 +129,6 @@ def get_command_line_parts(command_line):
         p['tout'] = False
 
     if len(remaining_cmd_line) > 2 and remaining_cmd_line[-2] in ['\>','\>>']:
-        # remove the backslash
-        remaining_cmd_line[-2] = remaining_cmd_line[-2][1:]
         p['saveto'] = False
     elif len(remaining_cmd_line) > 1 and remaining_cmd_line[-2].endswith('>'):
         p['saveto'] = ' '.join(remaining_cmd_line[-2:])
@@ -138,6 +136,8 @@ def get_command_line_parts(command_line):
     else:
         p['saveto'] = False
 
+    remaining_cmd_line = [i.replace('\>','>') for i in remaining_cmd_line]
+    # remove the backslash from redirects (\>)
     p['cmd'] = ' '.join(remaining_cmd_line)
 
     return p
